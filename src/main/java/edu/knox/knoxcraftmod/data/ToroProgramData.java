@@ -32,16 +32,15 @@ public class ToroProgramData extends SavedData {
             // default program for testing
             List<Instruction> instructionList = List.of(
                 new Instruction("forward", "dirt"),
-                new Instruction("forward", "dirt")
+                new Instruction("forward", "dirt"),
+                new Instruction("up", null),
+                new Instruction("up", null),
+                new Instruction("forward", null)
             );
             ToroProgram p = new ToroProgram("test", "simple test program", instructionList);
             addProgram(dev, p);
         }
     }
-
-    // public ToroProgramData create() {
-    //     return new ToroProgramData();
-    // }
 
     public void addProgram(UUID playerId, ToroProgram program) {
         programs.computeIfAbsent(playerId, k -> new HashMap<>()).put(program.getName(), program);

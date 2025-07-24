@@ -32,6 +32,8 @@ public class TorosaurusEntity extends Mob {
 
     public TorosaurusEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
+        // toros can fly
+        this.setNoGravity(true);
     }
 
     @Override
@@ -59,6 +61,8 @@ public class TorosaurusEntity extends Mob {
     {
         this.program = program.getInstructions();
         this.ip = 0;
+        
+        //direction = this.getDirection();
     }
 
 
@@ -142,4 +146,26 @@ public class TorosaurusEntity extends Mob {
             ownerUUID = tag.getUUID("owner");
         }
     }
+
+    public void updateDirectionFromRotation() {
+        float yaw = getYRot() % 360;
+        if (yaw < 0) yaw += 360;
+
+        if (yaw >= 45 && yaw < 135) {
+            direction = Direction.EAST;
+        } else if (yaw >= 135 && yaw < 225) {
+            direction = Direction.SOUTH;
+        } else if (yaw >= 225 && yaw < 315) {
+            direction = Direction.WEST;
+        } else {
+            direction = Direction.NORTH;
+        }
+    }
+
+    // change visibility
+    @Override
+    public void setRot(float pYRot, float pXRot) {
+        super.setRot(pYRot, pXRot);
+    }
+
 }

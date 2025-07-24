@@ -73,7 +73,13 @@ public class TurtleCommand
         LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
         toro.setPos(player.getX(), player.getY(), player.getZ());
         toro.setOwnerUUID(player.getUUID()); 
+        // set rotation
+        toro.setYRot(player.getYRot());
+        toro.setRot(player.getYRot(), player.getXRot());
+        toro.updateDirectionFromRotation();
+
         level.addFreshEntity(toro);
+
         source.sendSuccess(() -> Component.literal("Toro summoned."), false);
         return 1;
     }
