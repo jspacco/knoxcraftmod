@@ -1,7 +1,11 @@
 package edu.knox.knoxcraftmod.command;
 
+import org.slf4j.Logger;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.logging.LogUtils;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
@@ -14,8 +18,11 @@ import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 
-public class TurtleCommand {
+public class TurtleCommand 
+{
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -38,19 +45,36 @@ public class TurtleCommand {
         ServerLevel level = player.serverLevel();
 
         // Check if a Toro already exists for this player
-        for (Entity e : level.getEntities(ModEntities.TOROSAURUS.get(), player.getBoundingBox().inflate(64), entity -> true)) {
-            if (e.getUUID().equals(player.getUUID())) {
-                e.remove(Entity.RemovalReason.DISCARDED);
-                source.sendSuccess(() -> net.minecraft.network.chat.Component.literal("Toro removed."), false);
+        // FIXME: is 64 a big enough bounding box?
+        for (Entity e : level.getEntities(ModEntities.TOROSAURUS.get(), player.getBoundingBox().inflate(64), entity -> {
+            return entity instanceof TorosaurusEntity;}))
+        {
+            LOGGER.debug("Checking entity of type {} with uuid {}", e.getClass(), e.getUUID());
+            TorosaurusEntity t = (TorosaurusEntity)e;
+            LOGGER.debug("TorosaurusEntity has owner UUID {}", t.getOwnerUUID());
+            if (t.getOwnerUUID().equals(player.getUUID())) {
+                
+                LOGGER.debug("Removing Toro for uuid "+e.getUUID());
+                try {
+                    e.remove(Entity.RemovalReason.DISCARDED);
+                } catch (Exception ex) {
+                    LOGGER.debug(ex.toString());
+                    throw new RuntimeException(ex);
+                }
+                source.sendSuccess(() -> Component.literal("Toro removed."), false);
                 return 1;
             }
         }
+        LOGGER.debug("Spawning new Toro for player uuid "+player.getUUID());
 
+        // TODO: place TORO 1 unit away from the player
+        //net.minecraft.core.Direction dir = player.getDirection();
         TorosaurusEntity toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
+        LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
         toro.setPos(player.getX(), player.getY(), player.getZ());
-        toro.setOwnerUUID(player.getUUID()); // if you have a method for this
+        toro.setOwnerUUID(player.getUUID()); 
         level.addFreshEntity(toro);
-        source.sendSuccess(() -> net.minecraft.network.chat.Component.literal("Toro summoned."), false);
+        source.sendSuccess(() -> Component.literal("Toro summoned."), false);
         return 1;
     }
 
@@ -59,12 +83,13 @@ public class TurtleCommand {
         ServerLevel level = player.serverLevel();
 
         // Find the player's Toro
-        TorosaurusEntity toro = level.getEntities(ModEntities.TOROSAURUS.get(), player.getBoundingBox().inflate(64),
-            e -> e.getUUID().equals(player.getUUID()))
-            .stream().findFirst().orElse(null);
+        TorosaurusEntity toro = level.getEntities(ModEntities.TOROSAURUS.get(),
+            player.getBoundingBox().inflate(64),
+            e -> (e instanceof TorosaurusEntity) && ((TorosaurusEntity)e).getOwnerUUID().equals(player.getUUID()))
+                .stream().findFirst().orElse(null);
 
         if (toro == null) {
-            source.sendFailure(net.minecraft.network.chat.Component.literal("Toro not found."));
+            source.sendFailure(Component.literal("Toro not found."));
             return 0;
         }
 
@@ -75,12 +100,12 @@ public class TurtleCommand {
 
         ToroProgram program = data.getProgramsFor(player.getUUID()).get(name);
         if (program == null) {
-            source.sendFailure(net.minecraft.network.chat.Component.literal("Program not found."));
+            source.sendFailure(Component.literal("Program not found."));
             return 0;
         }
 
         toro.runProgram(program);
-        source.sendSuccess(() -> net.minecraft.network.chat.Component.literal("Program started."), false);
+        source.sendSuccess(() -> Component.literal("Program started."), false);
         return 1;
     }
 
@@ -91,12 +116,12 @@ public class TurtleCommand {
 
         var map = data.getProgramsFor(player.getUUID());
         if (map.isEmpty()) {
-            source.sendSuccess(() -> net.minecraft.network.chat.Component.literal("No programs found."), false);
+            source.sendSuccess(() -> Component.literal("No programs found."), false);
             return 0;
         }
 
         for (String name : map.keySet()) {
-            source.sendSuccess(() -> net.minecraft.network.chat.Component.literal("• " + name), false);
+            source.sendSuccess(() -> Component.literal("• " + name), false);
         }
 
         return 1;

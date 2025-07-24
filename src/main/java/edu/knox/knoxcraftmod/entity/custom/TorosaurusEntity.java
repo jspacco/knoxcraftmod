@@ -4,6 +4,7 @@ import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -15,7 +16,12 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
+
 public class TorosaurusEntity extends Mob {
+    private static final Logger LOGGER = LogUtils.getLogger();
     public final AnimationState idleAnimationState = new AnimationState();
     private int idleAnimationTimeout = 0;
     private UUID ownerUUID;
@@ -51,7 +57,8 @@ public class TorosaurusEntity extends Mob {
 
     public void runProgram(ToroProgram program)
     {
-
+        this.program = program.getInstructions();
+        this.ip = 0;
     }
 
 
@@ -62,13 +69,13 @@ public class TorosaurusEntity extends Mob {
         if (this.level().isClientSide()){
             this.setupAnimationStates();
         }
-
         if (level().isClientSide) return;
-
-        
         if (program == null || ip >= program.size()) return;
 
         Instruction instr = program.get(ip++);
+
+        LOGGER.debug("Running instruction #{} which is {}", ip, instr);
+
         BlockPos current = blockPosition();
         BlockPos target = switch (instr.command) {
             case "forward" -> offset(current, direction);
@@ -113,5 +120,26 @@ public class TorosaurusEntity extends Mob {
 
     public void setOwnerUUID(UUID uuid) {
         this.ownerUUID = uuid;
+    }
+
+    public UUID getOwnerUUID() {
+        return this.ownerUUID;
+    }
+
+    // Also save/load it
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (ownerUUID != null) {
+            tag.putUUID("owner", ownerUUID);
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.hasUUID("owner")) {
+            ownerUUID = tag.getUUID("owner");
+        }
     }
 }
