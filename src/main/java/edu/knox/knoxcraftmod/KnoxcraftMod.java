@@ -6,6 +6,7 @@ import edu.knox.knoxcraftmod.command.TurtleCommand;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.client.TorosaurusRenderer;
 import edu.knox.knoxcraftmod.entity.client.TriceratopsRenderer;
+import edu.knox.knoxcraftmod.http.HttpServerManager;
 import edu.knox.knoxcraftmod.item.ModCreativeModeTabs;
 import edu.knox.knoxcraftmod.item.ModItems;
 import net.minecraft.client.Minecraft;
@@ -128,8 +129,12 @@ public class KnoxcraftMod
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
-        // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
+        // start HTTP server
+        try {
+            HttpServerManager.start(event.getServer());
+        } catch (Exception e) {
+            LOGGER.error("Failed to start HTTP server", e);
+        }
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
