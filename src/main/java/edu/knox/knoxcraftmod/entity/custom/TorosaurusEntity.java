@@ -4,13 +4,18 @@ import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -72,8 +77,9 @@ public class TorosaurusEntity extends Mob {
 
         if (this.level().isClientSide()){
             this.setupAnimationStates();
+            return;
         }
-        if (level().isClientSide) return;
+
         if (program == null || ip >= program.size()) return;
 
         Instruction instr = program.get(ip++);
@@ -84,7 +90,10 @@ public class TorosaurusEntity extends Mob {
         BlockPos target = switch (instr.command) {
             case "forward" -> offset(current, direction);
             case "up" -> current.above();
-            case "down" -> current.below();
+            case "down" -> {
+                //TODO: can't go below the bottom level
+                yield current.below();
+            }
             default -> current;
         };
 
@@ -100,8 +109,33 @@ public class TorosaurusEntity extends Mob {
             case "turnLeft" -> direction = direction.turnLeft();
             case "turnRight" -> direction = direction.turnRight();
         }
-        // Don't place blocks yet
-        //if (instr)
+
+        if (instr.blockType != null) {
+            if (this.level() instanceof ServerLevel serverLevel) {
+                var blockRegistry = serverLevel.registryAccess()
+                    .registryOrThrow(Registries.BLOCK);
+
+                String pNamespace = "minecraft";
+                String pPath = instr.blockType;
+                
+                String[] tmp = instr.blockType.split(":");
+                if (tmp.length == 2) {
+                    pNamespace = tmp[0];
+                    pPath = tmp[1];
+                }
+                
+                Block block = blockRegistry.getOptional(ResourceLocation.
+                    fromNamespaceAndPath(pNamespace, pPath))
+                    .orElse(null);
+
+                if (block != null) {
+                    BlockPos placeAt = current; // place at the block we just moved from
+                    serverLevel.setBlock(placeAt, block.defaultBlockState(), 3);
+                } else {
+                    LOGGER.warn("Unknown block type: {}", instr.blockType);
+                }
+            }
+        }
     }
 
     private BlockPos offset(BlockPos pos, Direction dir) {
@@ -166,6 +200,36 @@ public class TorosaurusEntity extends Mob {
     @Override
     public void setRot(float pYRot, float pXRot) {
         super.setRot(pYRot, pXRot);
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public boolean isPickable() {
+        return false; // can't be targeted with mouse
+    }
+
+    @Override
+    public boolean isAffectedByFluids() {
+        return false;
+    }
+
+    @Override
+    public boolean isInWall() {
+        return false;
+    }
+
+    @Override
+    protected boolean isImmobile() {
+        return false;
+    }
+
+    @Override
+    public boolean isCurrentlyGlowing() {
+        return true;
     }
 
 }

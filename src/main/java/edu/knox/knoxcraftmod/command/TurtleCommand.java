@@ -16,12 +16,14 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
+import edu.knox.knoxcraftmod.BlockDumper;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 
 public class TurtleCommand 
 {
+    private static final boolean DUMP_BLOCKS = false;
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -38,6 +40,16 @@ public class TurtleCommand
                     .executes(ctx -> listPrograms(ctx.getSource())))
 
         );
+        if (DUMP_BLOCKS) {
+            dispatcher.register(
+                Commands.literal("dumpblocks")
+                    .requires(source -> source.hasPermission(2))
+                    .executes(ctx -> {
+                        BlockDumper.dumpAllBlocks(ctx.getSource().getLevel());
+                        return 1;
+                    }));
+        }
+
     }
 
     private static int toggleToro(CommandSourceStack source) {
@@ -73,7 +85,8 @@ public class TurtleCommand
         LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
         toro.setPos(player.getX(), player.getY(), player.getZ());
         toro.setOwnerUUID(player.getUUID()); 
-        // set rotation
+        
+        // TODO: figure out how to get the direction correct
         toro.setYRot(player.getYRot());
         toro.setRot(player.getYRot(), player.getXRot());
         toro.updateDirectionFromRotation();

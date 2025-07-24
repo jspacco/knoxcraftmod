@@ -33,9 +33,9 @@ public class ToroProgramData extends SavedData {
             List<Instruction> instructionList = List.of(
                 new Instruction("forward", "dirt"),
                 new Instruction("forward", "dirt"),
-                new Instruction("up", null),
-                new Instruction("up", null),
-                new Instruction("forward", null)
+                new Instruction("up", "stone"),
+                new Instruction("up", "minecraft:stone"),
+                new Instruction("forward", "minecraft:dirt")
             );
             ToroProgram p = new ToroProgram("test", "simple test program", instructionList);
             addProgram(dev, p);

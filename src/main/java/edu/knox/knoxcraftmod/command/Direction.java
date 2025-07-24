@@ -1,7 +1,5 @@
 package edu.knox.knoxcraftmod.command;
 
-import net.minecraft.nbt.CompoundTag;
-
 public enum Direction {
     NORTH, EAST, SOUTH, WEST;
 
@@ -23,5 +21,7 @@ public enum Direction {
         };
     }
 
+    
+    
 }
 

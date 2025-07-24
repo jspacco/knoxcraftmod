@@ -22,8 +22,12 @@ public class Instruction {
 
     public static Instruction fromNBT(CompoundTag tag) {
         String cmd = tag.getString("cmd");
-        String block = tag.contains("blk") ? tag.getString("block") : null;
+        String block = tag.contains("blk") ? tag.getString("blk") : null;
         return new Instruction(cmd, block);
+    }
+
+    public String toString() {
+        return String.format("%s, %s", command, blockType);
     }
     
 }
