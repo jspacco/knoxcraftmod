@@ -114,8 +114,7 @@ public class TurtleCommand
 
         // this should always return something,
         // becuase if it's not there it makes a new one
-        ToroProgramData data = 
-            level.getDataStorage().computeIfAbsent(ToroProgramData.FACTORY, "toro");
+        ToroProgramData data = ToroProgramData.get(level);
 
         ToroProgram program = data.getProgramsFor(player.getUUID()).get(name);
         if (program == null) {
@@ -124,14 +123,15 @@ public class TurtleCommand
         }
 
         toro.runProgram(program);
-        source.sendSuccess(() -> Component.literal("Program started."), false);
+        source.sendSuccess(() -> Component.literal("Program loaded!"), false);
         return 1;
     }
 
     private static int listPrograms(CommandSourceStack source) {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
-        ToroProgramData data = level.getDataStorage().computeIfAbsent(ToroProgramData.FACTORY, "toro_programs");
+        //ToroProgramData data = level.getDataStorage().computeIfAbsent(ToroProgramData.FACTORY, "toro_programs");
+        ToroProgramData data = ToroProgramData.get(level);
 
         var map = data.getProgramsFor(player.getUUID());
         if (map.isEmpty()) {
@@ -140,7 +140,8 @@ public class TurtleCommand
         }
 
         for (String name : map.keySet()) {
-            source.sendSuccess(() -> Component.literal("• " + name), false);
+            LOGGER.debug("Program name: "+name);
+            source.sendSuccess(() -> Component.literal("-> " + name), false);
         }
 
         return 1;

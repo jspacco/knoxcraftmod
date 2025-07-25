@@ -13,6 +13,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -67,7 +68,13 @@ public class TorosaurusEntity extends Mob {
         this.program = program.getInstructions();
         this.ip = 0;
         
-        //direction = this.getDirection();
+        LOGGER.debug("runProgram facing " +direction);
+        // get the server
+        Player player =this.level().
+            getPlayerByUUID(
+                UUID.fromString("380df991-f603-344c-a090-369bad2a924a"));
+        
+        LOGGER.debug("player facing " + player.getDirection());
     }
 
 

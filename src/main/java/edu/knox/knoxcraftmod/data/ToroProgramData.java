@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
+
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.core.HolderLookup;
@@ -16,6 +20,7 @@ import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
 public class ToroProgramData extends SavedData {
+    private static final Logger LOGGER = LogUtils.getLogger();
     public static final SavedData.Factory<ToroProgramData> FACTORY =
         new SavedData.Factory<>(
             ToroProgramData::new,       // constructor
@@ -45,6 +50,7 @@ public class ToroProgramData extends SavedData {
 
     public void addProgram(UUID playerId, ToroProgram program) {
         programs.computeIfAbsent(playerId, k -> new HashMap<>()).put(program.getName(), program);
+        LOGGER.debug("Program {} uploaded, map is now {}", program.getName(), programs);
         setDirty();
     }
 
