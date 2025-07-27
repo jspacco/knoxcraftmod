@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 public class TorosaurusEntity extends Mob {
+    private static final String SET_BLOCK = "setBlock";
     private static final Logger LOGGER = LogUtils.getLogger();
     public final AnimationState idleAnimationState = new AnimationState();
     private int idleAnimationTimeout = 0;
@@ -41,6 +42,7 @@ public class TorosaurusEntity extends Mob {
         super(type, level);
         // toros can fly
         this.setNoGravity(true);
+        this.setInvulnerable(true);
     }
 
     @Override
@@ -52,7 +54,8 @@ public class TorosaurusEntity extends Mob {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        return false; // invulnerable turtle
+        // invulnerable turtle
+        return false; 
     }
 
     private void setupAnimationStates() {
@@ -71,7 +74,7 @@ public class TorosaurusEntity extends Mob {
         
         LOGGER.debug("runProgram facing " +direction);
         // get the server
-        Player player =this.level().
+        Player player = this.level().
             getPlayerByUUID(
                 UUID.fromString("380df991-f603-344c-a090-369bad2a924a"));
         
@@ -90,13 +93,13 @@ public class TorosaurusEntity extends Mob {
 
         if (program == null || ip >= program.size()) return;
 
+        // fetch the next instruction
         Instruction instr = program.get(ip++);
 
         LOGGER.debug("Running instruction #{} which is {}", ip, instr);
 
-        BlockPos current = blockPosition();
-
-        if (instr.command.equals("setBlock")) {
+        // setBlock
+        if (instr.command.equals(SET_BLOCK)) {
             if (this.level() instanceof ServerLevel serverLevel) {
                 var blockRegistry = serverLevel.registryAccess()
                     .registryOrThrow(Registries.BLOCK);
@@ -104,7 +107,8 @@ public class TorosaurusEntity extends Mob {
                 // block types are stored as: "minecraft:dirt"
                 String[] tmp = instr.blockType.split(":");
                 if (tmp.length != 2) {
-                    //TODO: crash
+                    LOGGER.error("Unknown block type: {}", instr.blockType);
+                    return;
                 }
                 String pNamespace = tmp[0];
                 String pPath = tmp[1];
@@ -114,6 +118,7 @@ public class TorosaurusEntity extends Mob {
                     .orElse(null);
 
                 if (block != null) {
+                    BlockPos current = blockPosition();
                     serverLevel.setBlock(current, block.defaultBlockState(), 3);
                 } else {
                     LOGGER.warn("Unknown block type: {}", instr.blockType);
@@ -123,7 +128,23 @@ public class TorosaurusEntity extends Mob {
             return;
         }
 
-        BlockPos target = switch (instr.command) {
+        if (!List.of("forward", "back", "left", "right", 
+            "up", "down", "turnLeft", "turnRight", 
+            "tl", "tr").contains(instr.command))
+        {
+            LOGGER.warn("unknown command: "+instr.command);
+            return;
+        }
+
+        // otherwise it was a move command
+        moveToro(instr.command);
+    }
+
+    public void moveToro(String command)
+    {
+        BlockPos current = blockPosition();
+        
+        BlockPos target = switch (command) {
             case "forward" -> offset(current, direction);
             case "up" -> current.above();
             case "down" -> {
@@ -132,17 +153,20 @@ public class TorosaurusEntity extends Mob {
                 yield current.below();
             }
             case "back" -> offset(current, direction.opposite());
+            case "left" -> offset(current, direction.turnLeft());
+            case "right" -> offset(current, direction.turnRight());
             default -> current;
         };
 
-        switch (instr.command) {
-            case "forward", "up", "down", "back" -> {
+        switch (command) {
+            case "forward", "up", "down", "back", "left", "right" -> {
                 // allow overwriting blocks
                 setPos(Vec3.atBottomCenterOf(target));
             }
             
-            case "turnLeft" -> direction = direction.turnLeft();
-            case "turnRight" -> direction = direction.turnRight();
+            // TODO: update look of turtle
+            case "turnLeft", "tl" -> direction = direction.turnLeft();
+            case "turnRight", "tr" -> direction = direction.turnRight();
         }
     }
 
@@ -157,7 +181,7 @@ public class TorosaurusEntity extends Mob {
 
     @Override
     protected void registerGoals() {
-        // don't register any goals
+        // don't register any AI goals
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -255,6 +279,10 @@ public class TorosaurusEntity extends Mob {
         if (!level().isClientSide) {
             updateDirectionFromRotation();
         }
+    }
+
+    public void moveForward() {
+    
     }
 
 }

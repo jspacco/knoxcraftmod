@@ -1,15 +1,12 @@
 package edu.knox.knoxcraftmod.data;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
-import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

@@ -7,17 +7,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 
 import com.google.gson.Gson;
-import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 
-import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
 
