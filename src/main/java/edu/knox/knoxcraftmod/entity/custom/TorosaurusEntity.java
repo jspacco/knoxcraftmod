@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -190,19 +191,20 @@ public class TorosaurusEntity extends Mob {
     }
 
     public void updateDirectionFromRotation() {
-        float yaw = getYRot() % 360;
-        if (yaw < 0) yaw += 360;
-
-        if (yaw >= 45 && yaw < 135) {
-            direction = Direction.EAST;
-        } else if (yaw >= 135 && yaw < 225) {
+        float rot = Mth.wrapDegrees(getYRot());
+        if (rot >= -45 && rot < 45) {
             direction = Direction.SOUTH;
-        } else if (yaw >= 225 && yaw < 315) {
+        } else if (rot >= 45 && rot < 135) {
             direction = Direction.WEST;
+        } else if (rot >= -135 && rot < -45) {
+            direction = Direction.EAST;
         } else {
             direction = Direction.NORTH;
         }
     }
+
+
+    
 
     // change visibility
     @Override
@@ -244,6 +246,15 @@ public class TorosaurusEntity extends Mob {
     public boolean isCurrentlyGlowing() {
         // always glowing
         return true;
+    }
+
+    @Override
+    public void onAddedToWorld() {
+        super.onAddedToWorld();
+
+        if (!level().isClientSide) {
+            updateDirectionFromRotation();
+        }
     }
 
 }

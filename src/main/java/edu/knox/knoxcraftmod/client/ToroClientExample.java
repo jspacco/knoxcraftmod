@@ -17,6 +17,10 @@ public class ToroClientExample
         String description = "This is an example program.";
 
         Toro toro = new Toro(programName, description);
+        for (int i=0; i<5; i++) {
+            toro.down();
+            toro.setBlock(ToroBlockType.AIR);
+        }
         for (int i=0; i<10; i++) {
             toro.forward();
             toro.setBlock(ToroBlockType.DIRT);

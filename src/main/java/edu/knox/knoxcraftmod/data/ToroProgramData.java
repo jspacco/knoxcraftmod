@@ -75,7 +75,7 @@ public class ToroProgramData extends SavedData {
         ListTag userList = tag.getList("users", Tag.TAG_COMPOUND);
         for (Tag userTagRaw : userList) {
             CompoundTag userTag = (CompoundTag) userTagRaw;
-            String username = userTag.getString("uuid");
+            String username = userTag.getString("username");
             CompoundTag programsTag = userTag.getCompound("programs");
 
             Map<String, ToroProgram> userPrograms = new HashMap<>();
