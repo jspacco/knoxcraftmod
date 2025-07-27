@@ -126,7 +126,8 @@ public class TorosaurusEntity extends Mob {
             case "forward" -> offset(current, direction);
             case "up" -> current.above();
             case "down" -> {
-                //TODO: can't go below the bottom level
+                // can't set blocks below the bottom
+                if (current.getY() < 1) yield current;
                 yield current.below();
             }
             case "back" -> offset(current, direction.opposite());
@@ -137,10 +138,6 @@ public class TorosaurusEntity extends Mob {
             case "forward", "up", "down", "back" -> {
                 // allow overwriting blocks
                 setPos(Vec3.atBottomCenterOf(target));
-                // if (level().getBlockState(target).isAir()) {
-                //     //TODO: move, then place the
-                //     //this.move???
-                // }
             }
             
             case "turnLeft" -> direction = direction.turnLeft();
