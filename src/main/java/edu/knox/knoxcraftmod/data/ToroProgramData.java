@@ -28,34 +28,16 @@ public class ToroProgramData extends SavedData {
             DataFixTypes.LEVEL          // type of data
         );
     
-    private final Map<UUID, Map<String, ToroProgram>> programs = new HashMap<>();
+    private final Map<String, Map<String, ToroProgram>> programs = new HashMap<>();
 
-    public ToroProgramData() {
-        // default program
-        UUID dev = UUID.fromString("380df991-f603-344c-a090-369bad2a924a");
-
-        if (!programs.containsKey(dev)) {
-            // default program for testing
-            List<Instruction> instructionList = List.of(
-                new Instruction("forward", "dirt"),
-                new Instruction("forward", "dirt"),
-                new Instruction("up", "stone"),
-                new Instruction("up", "minecraft:stone"),
-                new Instruction("forward", "minecraft:dirt")
-            );
-            ToroProgram p = new ToroProgram("test", "simple test program", instructionList);
-            addProgram(dev, p);
-        }
-    }
-
-    public void addProgram(UUID playerId, ToroProgram program) {
-        programs.computeIfAbsent(playerId, k -> new HashMap<>()).put(program.getName(), program);
-        LOGGER.debug("Program {} uploaded, map is now {}", program.getName(), programs);
+    public void addProgram(String username, ToroProgram program) {
+        programs.computeIfAbsent(username.toLowerCase(), k -> new HashMap<>()).put(program.getProgramName(), program);
+        LOGGER.debug("Program {} uploaded, map is now {}", program.getProgramName(), programs);
         setDirty();
     }
 
-    public Map<String, ToroProgram> getProgramsFor(UUID playerId) {
-        return programs.getOrDefault(playerId, Map.of());
+    public Map<String, ToroProgram> getProgramsFor(String playerName) {
+        return programs.getOrDefault(playerName.toLowerCase(), Map.of());
     }
 
     @Override
@@ -67,11 +49,11 @@ public class ToroProgramData extends SavedData {
         ListTag userList = new ListTag();
 
         for (var entry : programs.entrySet()) {
-            UUID uuid = entry.getKey();
+            String username = entry.getKey();
             Map<String, ToroProgram> userPrograms = entry.getValue();
 
             CompoundTag userTag = new CompoundTag();
-            userTag.putUUID("uuid", uuid);
+            userTag.putString("username", username);
 
             CompoundTag programsTag = new CompoundTag();
             for (var programEntry : userPrograms.entrySet()) {
@@ -93,7 +75,7 @@ public class ToroProgramData extends SavedData {
         ListTag userList = tag.getList("users", Tag.TAG_COMPOUND);
         for (Tag userTagRaw : userList) {
             CompoundTag userTag = (CompoundTag) userTagRaw;
-            UUID uuid = userTag.getUUID("uuid");
+            String username = userTag.getString("uuid");
             CompoundTag programsTag = userTag.getCompound("programs");
 
             Map<String, ToroProgram> userPrograms = new HashMap<>();
@@ -102,7 +84,7 @@ public class ToroProgramData extends SavedData {
                 userPrograms.put(key, ToroProgram.fromNBT(key, programTag));
             }
 
-            data.programs.put(uuid, userPrograms);
+            data.programs.put(username, userPrograms);
         }
         return data;
     }

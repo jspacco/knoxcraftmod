@@ -94,6 +94,34 @@ public class TorosaurusEntity extends Mob {
         LOGGER.debug("Running instruction #{} which is {}", ip, instr);
 
         BlockPos current = blockPosition();
+
+        if (instr.command.equals("setBlock")) {
+            if (this.level() instanceof ServerLevel serverLevel) {
+                var blockRegistry = serverLevel.registryAccess()
+                    .registryOrThrow(Registries.BLOCK);
+
+                // block types are stored as: "minecraft:dirt"
+                String[] tmp = instr.blockType.split(":");
+                if (tmp.length != 2) {
+                    //TODO: crash
+                }
+                String pNamespace = tmp[0];
+                String pPath = tmp[1];
+                
+                Block block = blockRegistry.getOptional(ResourceLocation
+                    .fromNamespaceAndPath(pNamespace, pPath))
+                    .orElse(null);
+
+                if (block != null) {
+                    serverLevel.setBlock(current, block.defaultBlockState(), 3);
+                } else {
+                    LOGGER.warn("Unknown block type: {}", instr.blockType);
+                }
+            }
+            // setblock is done
+            return;
+        }
+
         BlockPos target = switch (instr.command) {
             case "forward" -> offset(current, direction);
             case "up" -> current.above();
@@ -101,47 +129,22 @@ public class TorosaurusEntity extends Mob {
                 //TODO: can't go below the bottom level
                 yield current.below();
             }
+            case "back" -> offset(current, direction.opposite());
             default -> current;
         };
 
         switch (instr.command) {
-            case "forward", "up", "down" -> {
-                if (level().getBlockState(target).isAir()) {
-                    //TODO: move, then place the
-                    //this.move???
-                    setPos(Vec3.atBottomCenterOf(target));
-                }
+            case "forward", "up", "down", "back" -> {
+                // allow overwriting blocks
+                setPos(Vec3.atBottomCenterOf(target));
+                // if (level().getBlockState(target).isAir()) {
+                //     //TODO: move, then place the
+                //     //this.move???
+                // }
             }
             
             case "turnLeft" -> direction = direction.turnLeft();
             case "turnRight" -> direction = direction.turnRight();
-        }
-
-        if (instr.blockType != null) {
-            if (this.level() instanceof ServerLevel serverLevel) {
-                var blockRegistry = serverLevel.registryAccess()
-                    .registryOrThrow(Registries.BLOCK);
-
-                String pNamespace = "minecraft";
-                String pPath = instr.blockType;
-                
-                String[] tmp = instr.blockType.split(":");
-                if (tmp.length == 2) {
-                    pNamespace = tmp[0];
-                    pPath = tmp[1];
-                }
-                
-                Block block = blockRegistry.getOptional(ResourceLocation.
-                    fromNamespaceAndPath(pNamespace, pPath))
-                    .orElse(null);
-
-                if (block != null) {
-                    BlockPos placeAt = current; // place at the block we just moved from
-                    serverLevel.setBlock(placeAt, block.defaultBlockState(), 3);
-                } else {
-                    LOGGER.warn("Unknown block type: {}", instr.blockType);
-                }
-            }
         }
     }
 
@@ -171,7 +174,8 @@ public class TorosaurusEntity extends Mob {
         return this.ownerUUID;
     }
 
-    // Also save/load it
+    // Save and load the Toro
+    // We know the UUID because this requires the person to be logged in
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -211,31 +215,37 @@ public class TorosaurusEntity extends Mob {
 
     @Override
     public boolean isPushable() {
+        // can't be pushed
         return false;
     }
 
     @Override
     public boolean isPickable() {
-        return false; // can't be targeted with mouse
+        // can't be targeted with mouse
+        return false; 
     }
 
     @Override
     public boolean isAffectedByFluids() {
+        // unaffected by fluids
         return false;
     }
 
     @Override
     public boolean isInWall() {
+        // never gets stuck in a wall (I think?)
         return false;
     }
 
     @Override
     protected boolean isImmobile() {
+        // not immobile
         return false;
     }
 
     @Override
     public boolean isCurrentlyGlowing() {
+        // always glowing
         return true;
     }
 

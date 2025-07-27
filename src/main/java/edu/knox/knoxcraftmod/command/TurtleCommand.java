@@ -61,18 +61,13 @@ public class TurtleCommand
         for (Entity e : level.getEntities(ModEntities.TOROSAURUS.get(), player.getBoundingBox().inflate(64), entity -> {
             return entity instanceof TorosaurusEntity;}))
         {
-            LOGGER.debug("Checking entity of type {} with uuid {}", e.getClass(), e.getUUID());
+            LOGGER.trace("Checking entity of type {} with uuid {}", e.getClass(), e.getUUID());
             TorosaurusEntity t = (TorosaurusEntity)e;
-            LOGGER.debug("TorosaurusEntity has owner UUID {}", t.getOwnerUUID());
+            LOGGER.trace("TorosaurusEntity has owner UUID {}", t.getOwnerUUID());
             if (t.getOwnerUUID().equals(player.getUUID())) {
                 
                 LOGGER.debug("Removing Toro for uuid "+e.getUUID());
-                try {
-                    e.remove(Entity.RemovalReason.DISCARDED);
-                } catch (Exception ex) {
-                    LOGGER.debug(ex.toString());
-                    throw new RuntimeException(ex);
-                }
+                e.remove(Entity.RemovalReason.DISCARDED);
                 source.sendSuccess(() -> Component.literal("Toro removed."), false);
                 return 1;
             }
@@ -116,7 +111,9 @@ public class TurtleCommand
         // becuase if it's not there it makes a new one
         ToroProgramData data = ToroProgramData.get(level);
 
-        ToroProgram program = data.getProgramsFor(player.getUUID()).get(name);
+        String playerName = player.getGameProfile().getName();
+        LOGGER.debug("Game Profile name is "+playerName);
+        ToroProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(name);
         if (program == null) {
             source.sendFailure(Component.literal("Program not found."));
             return 0;
@@ -130,10 +127,11 @@ public class TurtleCommand
     private static int listPrograms(CommandSourceStack source) {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
-        //ToroProgramData data = level.getDataStorage().computeIfAbsent(ToroProgramData.FACTORY, "toro_programs");
         ToroProgramData data = ToroProgramData.get(level);
 
-        var map = data.getProgramsFor(player.getUUID());
+        String playerName = player.getGameProfile().getName();
+        LOGGER.debug("Game Profile playerName is "+playerName);
+        var map = data.getProgramsFor(playerName);
         if (map.isEmpty()) {
             source.sendSuccess(() -> Component.literal("No programs found."), false);
             return 0;

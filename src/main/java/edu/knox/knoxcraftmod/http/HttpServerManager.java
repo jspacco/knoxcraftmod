@@ -25,8 +25,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 
 public class HttpServerManager {
+    public static final boolean LOGIN_REQUIRED = false;
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new Gson();
+
     //TODO: load from config file
     //TODO: best way to set up a config file for a new server
     private static final Map<String, String> USER_CREDENTIALS = Map.of(
@@ -50,28 +52,41 @@ public class HttpServerManager {
                 return;
             }
 
-            UploadRequest body = GSON.fromJson(
-                new InputStreamReader(exchange.getRequestBody()), UploadRequest.class);
+            String username = exchange.getRequestHeaders().getFirst("X-Username");
+            String password = exchange.getRequestHeaders().getFirst("X-Password");
 
-            if (!USER_CREDENTIALS.containsKey(body.username) || 
-                !USER_CREDENTIALS.get(body.username).equals(body.password)) {
+            
+            if (LOGIN_REQUIRED && (username == null || password == null)) {
+                send(exchange, 400, "Missing login credentials in headers");
+                return;
+            }
+
+            if (LOGIN_REQUIRED && (!USER_CREDENTIALS.containsKey(username) || 
+                !USER_CREDENTIALS.get(username).equals(password)))
+            {
                 send(exchange, 403, "Invalid username or password");
                 return;
             }
+
+            // Optional<GameProfile> profileOpt = server.getProfileCache().get(username);
+            // if (profileOpt.isEmpty()) {
+            //     LOGGER.warn("Unknown username: {}", username);
+            //     return;
+            // }
+            // UUID uuid = profileOpt.get().getId();
+
+
+            ToroProgram program = GSON.fromJson(
+                new InputStreamReader(exchange.getRequestBody()), ToroProgram.class);
+
+            LOGGER.trace("Program: {}", program);
 
             // Store the program
             ServerLevel level = server.getLevel(ServerLevel.OVERWORLD);
             ToroProgramData data = ToroProgramData.get(level);
 
-            ToroProgram program = new ToroProgram(body.programName, "Uploaded via HTTP", body.program);
-
-            Optional<GameProfile> profileOpt = server.getProfileCache().get(body.username);
-            if (profileOpt.isEmpty()) {
-                LOGGER.warn("Unknown username: {}", body.username);
-                return;
-            }
-            UUID uuid = profileOpt.get().getId();
-            data.addProgram(uuid, program);
+            // add the program with the username
+            data.addProgram(username, program);
 
             send(exchange, 200, "Program uploaded successfully");
         } catch (Exception e) {
@@ -93,10 +108,9 @@ public class HttpServerManager {
     }
 
     // Inner class for parsing request
-    private static class UploadRequest {
-        String username;
-        String password;
-        String programName;
-        java.util.List<Instruction> program;
-    }
+    // private static class UploadRequest {
+    //     String programName;
+    //     String description;
+    //     java.util.List<Instruction> program;
+    // }
 }

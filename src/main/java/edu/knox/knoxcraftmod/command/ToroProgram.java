@@ -9,18 +9,20 @@ import net.minecraft.nbt.Tag;
 
 public class ToroProgram
 {
-    private final String name;
-    private final String description;
-    private final List<Instruction> instructions;
+    private String programName;
+    private String description;
+    private List<Instruction> instructions;
 
-    public ToroProgram(String name, String description, List<Instruction> instructions) {
-        this.name = name;
+    public ToroProgram() {}
+
+    public ToroProgram(String programName, String description, List<Instruction> instructions) {
+        this.programName = programName;
         this.description = description;
         this.instructions = instructions;
     }
 
-    public String getName() {
-        return name;
+    public String getProgramName() {
+        return programName;
     }
 
     public String getDescription() {
@@ -58,6 +60,16 @@ public class ToroProgram
         return new ToroProgram(name, description, instructions);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append(programName);
+        b.append("\n");
+        b.append(description);
+        b.append("\n");
+        b.append(instructions);
 
+        return b.toString();
+    }
     
 }

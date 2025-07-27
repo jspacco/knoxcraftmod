@@ -21,6 +21,10 @@ public enum Direction {
         };
     }
 
+    public Direction opposite() {
+        return this.turnLeft().turnLeft();
+    }
+
     
     
 }

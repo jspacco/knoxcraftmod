@@ -27,7 +27,8 @@ public class Instruction {
     }
 
     public String toString() {
-        return String.format("%s, %s", command, blockType);
+        if (blockType == null) return command;
+        return String.format("%s->%s", command, blockType);
     }
     
 }
