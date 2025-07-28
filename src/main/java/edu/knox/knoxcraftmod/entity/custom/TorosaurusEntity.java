@@ -17,7 +17,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -149,7 +148,10 @@ public class TorosaurusEntity extends Mob {
             case "up" -> current.above();
             case "down" -> {
                 // can't set blocks below the bottom
-                if (current.getY() < 1) yield current;
+                if (current.getY() < 1) {
+                    LOGGER.debug("y value is "+current.getY());
+                    yield current;
+                }
                 yield current.below();
             }
             case "back" -> offset(current, direction.opposite());
@@ -165,8 +167,12 @@ public class TorosaurusEntity extends Mob {
             }
             
             // TODO: update look of turtle
-            case "turnLeft", "tl" -> direction = direction.turnLeft();
-            case "turnRight", "tr" -> direction = direction.turnRight();
+            case "turnLeft", "tl" -> {
+                direction = direction.turnLeft();
+            }
+            case "turnRight", "tr" -> {
+                direction = direction.turnRight();
+            }
         }
     }
 
@@ -279,10 +285,6 @@ public class TorosaurusEntity extends Mob {
         if (!level().isClientSide) {
             updateDirectionFromRotation();
         }
-    }
-
-    public void moveForward() {
-    
     }
 
 }

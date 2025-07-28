@@ -21,13 +21,25 @@ public class ToroUploader
     // with the program data in JSON format
     private static final Gson GSON;
     static {
-        //TODO: refactor with anonymous inner classes and chaining
+        // NOTE: we could refactor everything out of the static initializer
+        // to chain together the calls, but I think this code is clearer
+        //
         // custom serializers so that enums serialize correctly
         // TURN_LEFT becomes turnLeft
         // SUGAR_CANE becomes minecraft:sugar_cane
         GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.registerTypeAdapter(ToroCommand.class, new ToroCommandSerializer());
-        gsonBuilder.registerTypeAdapter(ToroBlockType.class, new ToroBlockTypeSerializer());
+        gsonBuilder.registerTypeAdapter(ToroCommand.class, new JsonSerializer<ToroCommand>() {
+            @Override
+            public JsonElement serialize(ToroCommand src, Type typeOfSrc, JsonSerializationContext context) {
+               return new JsonPrimitive(src.getId());
+            }
+        });
+        gsonBuilder.registerTypeAdapter(ToroBlockType.class, new JsonSerializer<ToroBlockType>() {
+            @Override
+            public JsonElement serialize(ToroBlockType src, Type typeOfSrc, JsonSerializationContext context) {
+                return new JsonPrimitive(src.getId());
+            }
+        });
         GSON = gsonBuilder.create();
     }
 
@@ -51,10 +63,7 @@ public class ToroUploader
         System.out.println(jsonPayload);
         // Send the POST request to the server
         // Handle the response and any errors
-        // This is where you would implement the actual HTTP request logic
-
-        // For example, using HttpClient to send the request
-
+        // sending username and password as custom headers
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(serverUrl + "/upload"))
             .header("Content-Type", "application/json")
@@ -71,21 +80,6 @@ public class ToroUploader
             }
         } catch (Exception e) {
             System.out.println("Upload failed with exception! " +e.toString());
-        }
-
-    }
-
-    private static class ToroCommandSerializer implements JsonSerializer<ToroCommand> {
-        @Override
-        public JsonElement serialize(ToroCommand src, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(src.getId());
-        }
-    }
-
-    private static class ToroBlockTypeSerializer implements JsonSerializer<ToroBlockType> {
-        @Override
-        public JsonElement serialize(ToroBlockType src, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(src.getId());
         }
 
     }

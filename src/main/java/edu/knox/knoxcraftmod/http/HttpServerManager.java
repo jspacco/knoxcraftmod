@@ -47,10 +47,9 @@ public class HttpServerManager {
                 exchange.sendResponseHeaders(405, -1);
                 return;
             }
-
+            //TODO: username is not the minecraft username
             String username = exchange.getRequestHeaders().getFirst("X-Username");
             String password = exchange.getRequestHeaders().getFirst("X-Password");
-
             
             if (LOGIN_REQUIRED && (username == null || password == null)) {
                 send(exchange, 400, "Missing login credentials in headers");
@@ -63,14 +62,6 @@ public class HttpServerManager {
                 send(exchange, 403, "Invalid username or password");
                 return;
             }
-
-            // Optional<GameProfile> profileOpt = server.getProfileCache().get(username);
-            // if (profileOpt.isEmpty()) {
-            //     LOGGER.warn("Unknown username: {}", username);
-            //     return;
-            // }
-            // UUID uuid = profileOpt.get().getId();
-
 
             ToroProgram program = GSON.fromJson(
                 new InputStreamReader(exchange.getRequestBody()), ToroProgram.class);
@@ -103,10 +94,4 @@ public class HttpServerManager {
         }
     }
 
-    // Inner class for parsing request
-    // private static class UploadRequest {
-    //     String programName;
-    //     String description;
-    //     java.util.List<Instruction> program;
-    // }
 }

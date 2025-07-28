@@ -1,7 +1,5 @@
 package edu.knox.knoxcraftmod.client;
 
-import com.google.gson.Gson;
-
 public class ToroClientExample 
 {
 

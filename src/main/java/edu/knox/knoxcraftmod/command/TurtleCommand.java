@@ -44,11 +44,13 @@ public class TurtleCommand
                     .executes(ctx -> listPrograms(ctx.getSource())))
 
         );
+        // manual movement commands
         LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal("toro");
 
         for (String action : List.of("forward", "back",
              "up", "down", "left", "right", 
-             "turnleft", "tl", "turnright", "tr")) {
+             "turnleft", "tl", "turnright", "tr")) 
+        {
             base.then(Commands.literal(action)
                 .executes(ctx -> manualMove(ctx, action)));
         }
@@ -69,17 +71,6 @@ public class TurtleCommand
 
         ctx.getSource().sendSuccess(() -> Component.literal("Toro moved: " + action), false);
         return 1;
-    }
-
-    private static void removeToro(ServerPlayer player, ServerLevel level)
-    {
-        String playerName = player.getGameProfile().getName();
-        // if it existed, remove it
-        if (playerToToro.containsKey(playerName)) {
-            Entity e = level.getEntity(playerToToro.get(playerName));
-            LOGGER.debug("Removing Toro for uuid "+e.getUUID());
-            if (e != null) e.remove(Entity.RemovalReason.DISCARDED);
-        }
     }
 
     private static int summonToro(CommandSourceStack source)

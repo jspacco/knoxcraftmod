@@ -38,6 +38,14 @@ public class Toro
         add(TURN_RIGHT);
     }
 
+    public void left() {
+        add(LEFT);
+    }
+
+    public void right() {
+        add(RIGHT);
+    }
+
     public void up() {
         add(UP);
     }
@@ -64,4 +72,5 @@ public class Toro
             this(command, null);
         }
     }
+
 }
