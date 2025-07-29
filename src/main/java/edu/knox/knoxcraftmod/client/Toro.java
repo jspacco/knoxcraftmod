@@ -16,6 +16,9 @@ public class Toro
 
     public Toro(String programName, String description)
     {
+        if (programName == null || description == null) {
+            throw new IllegalArgumentException("programName and description cannot be null!");
+        }
         this.programName = programName;
         this.description = description;
     }
