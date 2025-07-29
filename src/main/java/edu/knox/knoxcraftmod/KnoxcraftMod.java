@@ -100,13 +100,12 @@ public class KnoxcraftMod
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
 
-        // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
-        //ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
-
         // register KnoxcraftMod specific config information
-        // currently server-side only
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, KnoxcraftConfig.COMMON_CONFIG);
-
+        // putting into COMMON rather than SERVERCONFIG so that
+        // it's in one easy to find place (config) and not 
+        // in a per-world location (saves/WORLD_NAME/serverconfig)
+        // that needs to be set for every new world
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, KnoxcraftConfig.COMMON_CONFIG);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)

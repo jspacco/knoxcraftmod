@@ -24,23 +24,25 @@ import net.minecraft.server.level.ServerLevel;
 public class HttpServerManager {
     private static HttpServer httpServer;
 
-    private static boolean LOGIN_REQUIRED;
-    private static int PORT;
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new Gson();
 
+    // to be read from KnoxcraftConfig
+    private static boolean LOGIN_REQUIRED;
+    private static int PORT;
 
-    //TODO: load from config file
-    //TODO: best way to set up a config file for a new server
-    private static final Map<String, String> USER_CREDENTIALS = Map.of(
-        "dev", "foobar123",
-        "student1", "hello123"
-    );
+    // will be read from PasswordConfig
+    private static Map<String, String> USER_CREDENTIALS;
 
     public static void start(MinecraftServer server) throws Exception 
     {
         PORT = KnoxcraftConfig.HTTP_PORT;
         LOGIN_REQUIRED = KnoxcraftConfig.LOGIN_REQUIRED;
+        LOGGER.debug("Server login required is {}", LOGIN_REQUIRED);
+        
+        // load user credentials
+        USER_CREDENTIALS = PasswordConfig.loadOrCreate();
+
 
         if (httpServer != null) {
             LOGGER.warn("HTTP server already running!");
