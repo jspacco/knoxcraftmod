@@ -26,8 +26,6 @@ import net.minecraft.network.chat.Component;
 public class TurtleCommand 
 {
     private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static Map<String, UUID> playerToToro = new HashMap<>();
     private static Map<UUID, TorosaurusEntity> toroMap = new HashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -95,9 +93,11 @@ public class TurtleCommand
         toro.setOwnerUUID(player.getUUID()); 
         
         // TODO: figure out how to get the direction correct
-        toro.setYRot(player.getYRot());
-        toro.setRot(player.getYRot(), player.getXRot());
-        toro.updateDirectionFromRotation();
+        //toro.setYRot(player.getYRot());
+        //toro.setRot(player.getYRot(), player.getXRot());
+        Direction dir = Direction.fromDegrees(player.getYRot());
+        toro.setToroDirection(dir);
+        //toro.updateDirectionFromRotation();
         level.addFreshEntity(toro);
         // save the toro in the manager
         setToro(player.getUUID(), toro);
@@ -225,5 +225,10 @@ public class TurtleCommand
         return 1;
     }
 
+    public static void removeToro(UUID uuid) {
+        if (uuid != null){
+            toroMap.remove(uuid);
+        }
+    }
 
 }

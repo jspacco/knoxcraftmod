@@ -3,9 +3,12 @@ package edu.knox.knoxcraftmod.entity.custom;
 import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.ToroProgram;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -14,6 +17,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -27,6 +31,7 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 public class TorosaurusEntity extends Mob {
+    private static final int SUPERFLAT_GROUND_LEVEL = -60;
     private static final String SET_BLOCK = "setBlock";
     private static final Logger LOGGER = LogUtils.getLogger();
     public final AnimationState idleAnimationState = new AnimationState();
@@ -35,21 +40,60 @@ public class TorosaurusEntity extends Mob {
 
     private List<Instruction> program;
     private int ip = 0;
-    private Direction direction = Direction.NORTH;
+    
+    private static final EntityDataAccessor<Integer> DIRECTION =
+        SynchedEntityData.defineId(TorosaurusEntity.class, EntityDataSerializers.INT);
+
 
     public TorosaurusEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
         // toros can fly
         this.setNoGravity(true);
         this.setInvulnerable(true);
+        this.lookControl = new LookControl(this) {
+            @Override
+            public void tick() {
+                // Do nothing — prevents automatic head turning
+            }
+        };
+
+    }
+    @Override
+    protected void updateControlFlags() {
+        // Prevent setting flags like FLAG_MOVING that trigger head/body turns
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
+        // default to south (Minecraft defaults to south)
+        builder.define(DIRECTION, Direction.SOUTH.ordinal());
     }
 
-    
+    public void setToroDirection(Direction direction) {
+        int ordinal = direction.ordinal();
+        if (entityData.get(DIRECTION) != ordinal) {
+            entityData.set(DIRECTION, ordinal);
+        }
+    }
+
+
+    public Direction getToroDirection() {
+        return Direction.fromOrdinal(this.entityData.get(DIRECTION));
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+
+        if (key.equals(DIRECTION)) {
+            LOGGER.debug("HEYHEY Toro direction updated on client: {}", getToroDirection());
+            float yaw = getToroDirection().toYaw();
+            setYRot(yaw);
+            setYHeadRot(yaw);
+            setYBodyRot(yaw);
+        }
+    }
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
@@ -70,14 +114,6 @@ public class TorosaurusEntity extends Mob {
     {
         this.program = program.getInstructions();
         this.ip = 0;
-        
-        LOGGER.debug("runProgram facing " +direction);
-        // get the server
-        Player player = this.level().
-            getPlayerByUUID(
-                UUID.fromString("380df991-f603-344c-a090-369bad2a924a"));
-        
-        LOGGER.debug("player facing " + player.getDirection());
     }
 
 
@@ -88,6 +124,13 @@ public class TorosaurusEntity extends Mob {
         if (this.level().isClientSide()){
             this.setupAnimationStates();
             return;
+        }
+
+        if (!level().isClientSide) {
+        //     // Server sets Y rotation
+            setYRot(getToroDirection().toYaw());
+            setYHeadRot(getYRot());
+            setYBodyRot(getYRot());
         }
 
         if (program == null || ip >= program.size()) return;
@@ -128,7 +171,7 @@ public class TorosaurusEntity extends Mob {
         }
 
         if (!List.of("forward", "back", "left", "right", 
-            "up", "down", "turnLeft", "turnRight", 
+            "up", "down", "turnleft", "turnright", 
             "tl", "tr").contains(instr.command))
         {
             LOGGER.warn("unknown command: "+instr.command);
@@ -144,19 +187,18 @@ public class TorosaurusEntity extends Mob {
         BlockPos current = blockPosition();
         
         BlockPos target = switch (command) {
-            case "forward" -> offset(current, direction);
+            case "forward" -> offset(current, getToroDirection());
             case "up" -> current.above();
             case "down" -> {
                 // can't set blocks below the bottom
-                if (current.getY() < 1) {
-                    LOGGER.debug("y value is "+current.getY());
+                if (current.getY() <= SUPERFLAT_GROUND_LEVEL) {
                     yield current;
                 }
                 yield current.below();
             }
-            case "back" -> offset(current, direction.opposite());
-            case "left" -> offset(current, direction.turnLeft());
-            case "right" -> offset(current, direction.turnRight());
+            case "back" -> offset(current, getToroDirection().opposite());
+            case "left" -> offset(current, getToroDirection().turnLeft());
+            case "right" -> offset(current, getToroDirection().turnRight());
             default -> current;
         };
 
@@ -166,12 +208,11 @@ public class TorosaurusEntity extends Mob {
                 setPos(Vec3.atBottomCenterOf(target));
             }
             
-            // TODO: update look of turtle
-            case "turnLeft", "tl" -> {
-                direction = direction.turnLeft();
+            case "turnleft", "tl" -> {
+                setToroDirection(getToroDirection().turnLeft());
             }
-            case "turnRight", "tr" -> {
-                direction = direction.turnRight();
+            case "turnright", "tr" -> {
+                setToroDirection(getToroDirection().turnRight());
             }
         }
     }
@@ -220,18 +261,18 @@ public class TorosaurusEntity extends Mob {
         }
     }
 
-    public void updateDirectionFromRotation() {
-        float rot = Mth.wrapDegrees(getYRot());
-        if (rot >= -45 && rot < 45) {
-            direction = Direction.SOUTH;
-        } else if (rot >= 45 && rot < 135) {
-            direction = Direction.WEST;
-        } else if (rot >= -135 && rot < -45) {
-            direction = Direction.EAST;
-        } else {
-            direction = Direction.NORTH;
-        }
-    }
+    // public void updateDirectionFromRotation() {
+    //     float rot = Mth.wrapDegrees(getYRot());
+    //     if (rot >= -45 && rot < 45) {
+    //         direction = Direction.SOUTH;
+    //     } else if (rot >= 45 && rot < 135) {
+    //         direction = Direction.WEST;
+    //     } else if (rot >= -135 && rot < -45) {
+    //         direction = Direction.EAST;
+    //     } else {
+    //         direction = Direction.NORTH;
+    //     }
+    // }
 
 
     
@@ -279,11 +320,22 @@ public class TorosaurusEntity extends Mob {
     }
 
     @Override
+    public void turn(double yRot, double xRot) {
+        // Suppress player input or AI turning
+    }
+
+    @Override
+    public void lookAt(EntityAnchorArgument.Anchor anchor, Vec3 target) {
+        // Suppress automatic look-at behavior
+    }
+
+
+    @Override
     public void onAddedToWorld() {
         super.onAddedToWorld();
 
         if (!level().isClientSide) {
-            updateDirectionFromRotation();
+            this.setYRot(getToroDirection().toYaw());
         }
     }
 

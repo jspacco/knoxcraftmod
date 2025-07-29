@@ -1,8 +1,10 @@
 package edu.knox.knoxcraftmod.entity.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
+import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider.Context;
@@ -16,7 +18,22 @@ public class TorosaurusRenderer extends MobRenderer<TorosaurusEntity, Torosaurus
         super(pContext, new TorosaurusModel<>(pContext.bakeLayer(TorosaurusModel.LAYER_LOCATION)), 0.85f);
     }
 
-    
+    @Override
+    protected void setupRotations(TorosaurusEntity entity, PoseStack poseStack, float pBob, 
+        float pYBodyRot, float pPartialTick, float pScale) 
+    {
+        super.setupRotations(entity, poseStack, pBob, pYBodyRot, pPartialTick, pScale);
+
+
+        // Use the synced direction
+        switch (entity.getToroDirection()) {
+            case NORTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
+            case SOUTH -> poseStack.mulPose(Axis.YP.rotationDegrees(0));
+            case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(-90));
+            case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
+        }
+    }
+
 
     @Override
     public ResourceLocation getTextureLocation(TorosaurusEntity pEntity) {

@@ -1,5 +1,7 @@
 package edu.knox.knoxcraftmod.command;
 
+import net.minecraft.util.Mth;
+
 public enum Direction {
     NORTH, EAST, SOUTH, WEST;
 
@@ -25,7 +27,31 @@ public enum Direction {
         return this.turnLeft().turnLeft();
     }
 
-    
+    public static Direction fromOrdinal(int i) {
+        return values()[i % values().length];
+    }
+
+    public float toYaw() {
+        return switch (this) {
+            case NORTH -> 180f;
+            case EAST -> -90f;
+            case SOUTH -> 0f;
+            case WEST -> 90f;
+        };
+    }
+
+    public static Direction fromDegrees(float yRot) {
+        float rot = Mth.wrapDegrees(yRot);
+        if (rot >= -45 && rot < 45) {
+            return Direction.SOUTH;
+        } else if (rot >= 45 && rot < 135) {
+            return Direction.WEST;
+        } else if (rot >= -135 && rot < -45) {
+            return Direction.EAST;
+        } else {
+            return Direction.NORTH;
+        }
+    }
     
 }
 

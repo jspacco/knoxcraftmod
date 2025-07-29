@@ -174,19 +174,13 @@ public class TorosaurusModel<T extends TorosaurusEntity> extends HierarchicalMod
 	public void setupAnim(TorosaurusEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
         this.applyHeadRotation(netHeadYaw, headPitch);
+		
+		this.body.yRot = (float) Math.toRadians(entity.getToroDirection().toYaw());
+
 
         this.animateWalk(TriceratopsAnimations.TRIKE_WALKING, limbSwing, limbSwingAmount, 2f, 2.5f);
         this.animate(entity.idleAnimationState, TriceratopsAnimations.TRIKE_IDLE, ageInTicks, 1f);
 	}
-
-    // @Override
-    // public void setupAnim(TriceratopsRenderState state) {
-    //     this.root().getAllParts().forEach(ModelPart::resetPose);
-    //     this.applyHeadRotation(state.yRot, state.xRot);
-
-    //     this.animateWalk(TriceratopsAnimations.ANIM_TRICERATOPS_WALKING, state.walkAnimationPos, state.walkAnimationSpeed, 2f, 2.5f);
-    //     this.animate(state.idleAnimationState, TriceratopsAnimations.ANIM_TRICERATOPS_IDLE, state.ageInTicks, 1f);
-    // }
 
 	@Override
 	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
