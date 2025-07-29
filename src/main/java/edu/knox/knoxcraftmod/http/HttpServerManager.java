@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import com.google.gson.Gson;
 import com.mojang.logging.LogUtils;
 
+import edu.knox.knoxcraftmod.KnoxcraftConfig;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
 
@@ -23,9 +24,11 @@ import net.minecraft.server.level.ServerLevel;
 public class HttpServerManager {
     private static HttpServer httpServer;
 
-    public static final boolean LOGIN_REQUIRED = false;
+    private static boolean LOGIN_REQUIRED;
+    private static int PORT;
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new Gson();
+
 
     //TODO: load from config file
     //TODO: best way to set up a config file for a new server
@@ -34,18 +37,27 @@ public class HttpServerManager {
         "student1", "hello123"
     );
 
-    public static void start(MinecraftServer server) throws Exception {
-        httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
+    public static void start(MinecraftServer server) throws Exception 
+    {
+        PORT = KnoxcraftConfig.HTTP_PORT;
+        LOGIN_REQUIRED = KnoxcraftConfig.LOGIN_REQUIRED;
+
+        if (httpServer != null) {
+            LOGGER.warn("HTTP server already running!");
+            return;
+        }
+        httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/upload", exchange -> handleUpload(exchange, server));
         httpServer.setExecutor(Executors.newCachedThreadPool());
         httpServer.start();
-        System.out.println("HTTP server running on port 8080");
+        LOGGER.debug("HTTP server running on port {}}", PORT);
     }
 
     public static void stop() {
         if (httpServer != null) {
-            System.out.println("Shutting down HTTP server...");
-            httpServer.stop(0); // 0 = no delay
+            LOGGER.debug("Shutting down HTTP server...");
+            // 0 = no delay
+            httpServer.stop(0); 
             httpServer = null;
         }
     }

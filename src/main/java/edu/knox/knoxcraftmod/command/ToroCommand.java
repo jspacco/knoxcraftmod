@@ -22,7 +22,7 @@ import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
 import net.minecraft.network.chat.Component;
 
-public class TurtleCommand 
+public class ToroCommand 
 {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static Map<UUID, TorosaurusEntity> toroMap = new HashMap<>();
