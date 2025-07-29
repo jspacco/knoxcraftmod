@@ -8,7 +8,9 @@ import static edu.knox.knoxcraftmod.client.ToroCommand.*;
 
 public class Toro
 {
+    @SuppressWarnings("unused")
     private final String programName;
+    @SuppressWarnings("unused")
     private final String description;
     private List<ToroInstruction> instructions = new LinkedList<>();
 
@@ -60,7 +62,9 @@ public class Toro
 
     private static class ToroInstruction 
     {
+        @SuppressWarnings("unused")
         private final ToroCommand command;
+        @SuppressWarnings("unused")
         private final ToroBlockType blockType;
 
         ToroInstruction(ToroCommand command, ToroBlockType toroBlockType) {
