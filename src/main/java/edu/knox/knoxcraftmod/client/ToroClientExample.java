@@ -6,9 +6,13 @@ public class ToroClientExample
     public static void main(String[] args) {
         // Example usage of the Uploader class
         String serverUrl = "http://localhost:8080";
-        String username = "dev";
+        // TODO: your username on minecraft
+        String minecraftPlayername = "dev";
+        // TODO: your college email username
+        String username = "test";
+        // TODO: the password provided for you by your instructor
         String password = "foobar123";
-        ToroUploader uploader = new ToroUploader(serverUrl, username, password);
+        ToroUploader uploader = new ToroUploader(serverUrl,minecraftPlayername, username, password);
         
         //String programName = "test2";
         String programName = "flump";

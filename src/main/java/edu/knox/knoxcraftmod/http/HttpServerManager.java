@@ -74,6 +74,7 @@ public class HttpServerManager {
             //TODO: username is not the minecraft username
             String username = exchange.getRequestHeaders().getFirst("X-Username");
             String password = exchange.getRequestHeaders().getFirst("X-Password");
+            String minecraftPlayername = exchange.getRequestHeaders().getFirst("X-MinecraftPlayername");
             
             if (LOGIN_REQUIRED && (username == null || password == null)) {
                 send(exchange, 400, "Missing login credentials in headers");
@@ -97,7 +98,7 @@ public class HttpServerManager {
             ToroProgramData data = ToroProgramData.get(level);
 
             // add the program with the username
-            data.addProgram(username, program);
+            data.addProgram(minecraftPlayername, program);
 
             send(exchange, 200, "Program uploaded successfully");
         } catch (Exception e) {

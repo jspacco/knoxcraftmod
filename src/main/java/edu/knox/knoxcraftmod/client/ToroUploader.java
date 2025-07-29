@@ -14,18 +14,25 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
+/**
+ * Client uploader.
+ * 
+ * Create an HTTP client and send a POST request to the server
+ * with the program delivered as a JSON payload.
+ * 
+ * Basically, the Toro client generates a series of instructions
+ * that are serialized into JSON and uploaded. The server
+ * never runs the student code.
+ */
 public class ToroUploader
 {
-    // client upload code
-    // create an HTTP client and send a POST request to the server
-    // with the program data in JSON format
     private static final Gson GSON;
     static {
         // NOTE: we could refactor everything out of the static initializer
         // to chain together the calls, but I think this code is clearer
         //
         // custom serializers so that enums serialize correctly
-        // TURN_LEFT becomes turnLeft
+        // TURN_LEFT becomes turnleft
         // SUGAR_CANE becomes minecraft:sugar_cane
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(ToroCommand.class, new JsonSerializer<ToroCommand>() {
@@ -47,16 +54,30 @@ public class ToroUploader
     private String serverUrl;
     private String username;
     private String password;
+    private String minecraftPlayername;
 
-    public ToroUploader(String serverUrl, String username, String password) {
+    public ToroUploader(String serverUrl, String minecraftPlayerName) {
+        this(serverUrl, minecraftPlayerName, "", "");
+    }
+
+    public ToroUploader(String serverUrl, String minecraftPlayername, String username, String password) {
         this.serverUrl = serverUrl;
         this.username = username;
         this.password = password;
+        this.minecraftPlayername = minecraftPlayername;
         this.httpClient = HttpClient.newHttpClient();
     }
 
     
 
+    /**
+     * Upload the Toro program to the minecraft server
+     * using the serverURL passed into the constructor.
+     * 
+     * minecraftPlayername is required.
+     * 
+     * @param toro
+     */
     public void uploadProgram(Toro toro)
     {
         String jsonPayload = GSON.toJson(toro);
@@ -67,6 +88,7 @@ public class ToroUploader
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(serverUrl + "/upload"))
             .header("Content-Type", "application/json")
+            .header("X-MinecraftPlayername", minecraftPlayername)
             .header("X-Username", username)
             .header("X-Password", password)
             .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
