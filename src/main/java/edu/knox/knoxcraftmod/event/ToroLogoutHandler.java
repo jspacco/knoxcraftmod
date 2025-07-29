@@ -3,7 +3,7 @@ package edu.knox.knoxcraftmod.event;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
-
+import edu.knox.knoxcraftmod.KnoxcraftMod;
 import edu.knox.knoxcraftmod.command.ToroCommand;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
@@ -12,7 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.server.level.ServerPlayer;
 
-@Mod.EventBusSubscriber(modid = "knoxcraftmod")
+@Mod.EventBusSubscriber(modid = KnoxcraftMod.MODID)
 public class ToroLogoutHandler {
     private static final Logger LOGGER = LogUtils.getLogger();
 

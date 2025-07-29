@@ -2,7 +2,7 @@ package edu.knox.knoxcraftmod;
 
 import com.mojang.logging.LogUtils;
 
-import edu.knox.knoxcraftmod.command.TurtleCommand;
+import edu.knox.knoxcraftmod.command.ToroCommand;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.client.TorosaurusRenderer;
 import edu.knox.knoxcraftmod.entity.client.TriceratopsRenderer;
@@ -140,6 +140,11 @@ public class KnoxcraftMod
         }
     }
 
+    @SubscribeEvent
+    public static <FMLServerStoppingEvent> void onServerStopping(FMLServerStoppingEvent event) {
+        HttpServerManager.stop();
+    }
+
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents
@@ -159,7 +164,7 @@ public class KnoxcraftMod
     // regsiter for slash commands
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        TurtleCommand.register(event.getDispatcher());
+        ToroCommand.register(event.getDispatcher());
     }
 
 }

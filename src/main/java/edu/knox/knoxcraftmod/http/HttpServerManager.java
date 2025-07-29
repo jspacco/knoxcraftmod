@@ -21,6 +21,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 
 public class HttpServerManager {
+    private static HttpServer httpServer;
+
     public static final boolean LOGIN_REQUIRED = false;
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new Gson();
@@ -33,11 +35,19 @@ public class HttpServerManager {
     );
 
     public static void start(MinecraftServer server) throws Exception {
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
+        httpServer = HttpServer.create(new InetSocketAddress(8080), 0);
         httpServer.createContext("/upload", exchange -> handleUpload(exchange, server));
         httpServer.setExecutor(Executors.newCachedThreadPool());
         httpServer.start();
         System.out.println("HTTP server running on port 8080");
+    }
+
+    public static void stop() {
+        if (httpServer != null) {
+            System.out.println("Shutting down HTTP server...");
+            httpServer.stop(0); // 0 = no delay
+            httpServer = null;
+        }
     }
 
     private static void handleUpload(HttpExchange exchange, MinecraftServer server) {

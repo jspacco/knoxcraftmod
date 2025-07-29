@@ -1,13 +1,13 @@
 package edu.knox.knoxcraftmod.event;
 
+import edu.knox.knoxcraftmod.KnoxcraftMod;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-//@Mod.EventBusSubscriber(modid = "knoxcraftmod")
-@Mod.EventBusSubscriber(modid = "knoxcraftmod", bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Mod.EventBusSubscriber(modid = KnoxcraftMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SpawnHandler {
 
     @SubscribeEvent
