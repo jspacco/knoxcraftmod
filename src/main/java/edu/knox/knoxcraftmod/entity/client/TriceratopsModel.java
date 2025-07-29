@@ -178,15 +178,6 @@ public class TriceratopsModel<T extends TriceratopsEntity> extends HierarchicalM
         this.animate(entity.idleAnimationState, TriceratopsAnimations.TRIKE_IDLE, ageInTicks, 1f);
 	}
 
-    // @Override
-    // public void setupAnim(TriceratopsRenderState state) {
-    //     this.root().getAllParts().forEach(ModelPart::resetPose);
-    //     this.applyHeadRotation(state.yRot, state.xRot);
-
-    //     this.animateWalk(TriceratopsAnimations.ANIM_TRICERATOPS_WALKING, state.walkAnimationPos, state.walkAnimationSpeed, 2f, 2.5f);
-    //     this.animate(state.idleAnimationState, TriceratopsAnimations.ANIM_TRICERATOPS_IDLE, state.ageInTicks, 1f);
-    // }
-
 	@Override
 	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
 		body.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);

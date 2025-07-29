@@ -6,7 +6,6 @@ import edu.knox.knoxcraftmod.command.TurtleCommand;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.client.TorosaurusRenderer;
 import edu.knox.knoxcraftmod.entity.client.TriceratopsRenderer;
-import edu.knox.knoxcraftmod.event.PlayerEventHandler;
 import edu.knox.knoxcraftmod.http.HttpServerManager;
 import edu.knox.knoxcraftmod.item.ModCreativeModeTabs;
 import edu.knox.knoxcraftmod.item.ModItems;

@@ -17,7 +17,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
@@ -103,67 +102,6 @@ public class TurtleCommand
         setToro(player.getUUID(), toro);
         return toro;
     }
-
-    // private static TorosaurusEntity getPlayerToro(ServerPlayer player, ServerLevel level)
-    // {
-    //     String playerName = player.getGameProfile().getName();
-        
-    //     if (!playerToToro.containsKey(playerName)) {
-    //         TorosaurusEntity toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
-    //         LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
-    //         toro.setPos(player.getX(), player.getY(), player.getZ());
-    //         toro.setOwnerUUID(player.getUUID()); 
-            
-    //         // TODO: figure out how to get the direction correct
-    //         toro.setYRot(player.getYRot());
-    //         toro.setRot(player.getYRot(), player.getXRot());
-    //         toro.updateDirectionFromRotation();
-
-    //         level.addFreshEntity(toro);
-    //         playerToToro.put(playerName, toro.getUUID());
-    //     }
-    //     return (TorosaurusEntity)level.getEntity(playerToToro.get(playerName));
-    // }
-
-    // private static int toggleToro(CommandSourceStack source) {
-    //     ServerPlayer player = source.getPlayer();
-    //     ServerLevel level = player.serverLevel();
-
-    //     // Check if a Toro already exists for this player
-    //     // FIXME: is 64 a big enough bounding box?
-    //     for (Entity e : level.getEntities(ModEntities.TOROSAURUS.get(), player.getBoundingBox().inflate(64), entity -> {
-    //         return entity instanceof TorosaurusEntity;}))
-    //     {
-    //         LOGGER.trace("Checking entity of type {} with uuid {}", e.getClass(), e.getUUID());
-    //         TorosaurusEntity t = (TorosaurusEntity)e;
-    //         LOGGER.trace("TorosaurusEntity has owner UUID {}", t.getOwnerUUID());
-    //         if (t.getOwnerUUID().equals(player.getUUID())) {
-                
-    //             LOGGER.debug("Removing Toro for uuid "+e.getUUID());
-    //             e.remove(Entity.RemovalReason.DISCARDED);
-    //             source.sendSuccess(() -> Component.literal("Toro removed."), false);
-    //             return 1;
-    //         }
-    //     }
-    //     LOGGER.debug("Spawning new Toro for player uuid "+player.getUUID());
-
-    //     // TODO: place TORO 1 unit away from the player
-    //     //net.minecraft.core.Direction dir = player.getDirection();
-    //     TorosaurusEntity toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
-    //     LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
-    //     toro.setPos(player.getX(), player.getY(), player.getZ());
-    //     toro.setOwnerUUID(player.getUUID()); 
-        
-    //     // TODO: figure out how to get the direction correct
-    //     toro.setYRot(player.getYRot());
-    //     toro.setRot(player.getYRot(), player.getXRot());
-    //     toro.updateDirectionFromRotation();
-
-    //     level.addFreshEntity(toro);
-
-    //     source.sendSuccess(() -> Component.literal("Toro summoned."), false);
-    //     return 1;
-    // }
 
     private static void setToro(UUID uuid, TorosaurusEntity toro) {
         toroMap.put(uuid, toro);

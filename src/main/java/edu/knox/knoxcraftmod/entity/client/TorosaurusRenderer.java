@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
-import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider.Context;
