@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
-import edu.knox.knoxcraftmod.command.TurtleCommand;
+import edu.knox.knoxcraftmod.command.ToroCommand;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -27,7 +27,7 @@ public class ToroLogoutHandler {
             .forEach(toro -> {
                 String username = event.getEntity().getGameProfile().getName();
                 LOGGER.debug("removing Toro for "+ username);
-                TurtleCommand.removeToro(player.getUUID());
+                ToroCommand.removeToro(player.getUUID());
                 toro.discard();
             });
     }
