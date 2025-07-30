@@ -1,5 +1,9 @@
 package edu.knox.knoxcraftmod.client;
 
+// This import is necessary! 
+// We strip out the package when we distribute to students
+import edu.knox.knoxcraftmod.client.*;
+
 public class PyramidExample {
     public static void main(String[] args)
     {
