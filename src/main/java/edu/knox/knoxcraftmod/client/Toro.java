@@ -3,9 +3,6 @@ package edu.knox.knoxcraftmod.client;
 import java.util.LinkedList;
 import java.util.List;
 
-import static edu.knox.knoxcraftmod.client.ToroCommand.*;
-
-
 public class Toro
 {
     @SuppressWarnings("unused")
@@ -24,39 +21,39 @@ public class Toro
     }
 
     public void setBlock(ToroBlockType toroBlockType) {
-        instructions.add(new ToroInstruction(SET_BLOCK, toroBlockType));
+        instructions.add(new ToroInstruction(ToroCommand.SET_BLOCK, toroBlockType));
     }
 
     public void forward() {
-        add(FORWARD);
+        add(ToroCommand.FORWARD);
     }
 
     public void back() {
-        add(BACK);
+        add(ToroCommand.BACK);
     }
 
     public void turnLeft() {
-        add(TURN_LEFT);
+        add(ToroCommand.TURN_LEFT);
     }
 
     public void turnRight() {
-        add(TURN_RIGHT);
+        add(ToroCommand.TURN_RIGHT);
     }
 
     public void left() {
-        add(LEFT);
+        add(ToroCommand.LEFT);
     }
 
     public void right() {
-        add(RIGHT);
+        add(ToroCommand.RIGHT);
     }
 
     public void up() {
-        add(UP);
+        add(ToroCommand.UP);
     }
 
     public void down() {
-        add(DOWN);
+        add(ToroCommand.DOWN);
     }
 
     private void add(ToroCommand cmd) {

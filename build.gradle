@@ -216,3 +216,76 @@ sourceSets.each {
     it.output.resourcesDir = dir
     it.java.destinationDirectory = dir
 }
+
+def studentProjectDir = file("$buildDir/knoxcraft")
+
+// Define a custom Jar task for the student lib jar
+task clientJar(type: Jar) {
+    group = 'build'
+    description = 'Builds a JAR with just the client code for students, excluding ToroClientExample and other files ending in Example'
+
+    archiveBaseName = 'knoxcraft-client'
+    destinationDirectory = file("$studentProjectDir/lib")
+
+    // Only include classes from the client package
+    from sourceSets.main.output
+
+    include 'edu/knox/knoxcraftmod/client/**'
+
+    // Exclude the example class
+    exclude 'edu/knox/knoxcraftmod/client/*Example.class'
+}
+
+
+task prepareStudentProject {
+    group = 'distribution'
+    description = 'Creates a student project folder with src, lib, and workspace.'
+
+    def srcDir = new File(studentProjectDir, "src")
+    def libDir = new File(studentProjectDir, "lib")
+
+    doLast {
+        delete studentProjectDir
+        srcDir.mkdirs()
+        libDir.mkdirs()
+
+        def javaFiles = fileTree('src/main/java') {
+            include 'edu/knox/knoxcraftmod/client/*Example.java'
+        }
+
+        javaFiles.each { file ->
+            def newContent = file.text.replaceAll('package edu\\.knox.*;', '')
+            def targetFile = new File(srcDir, file.name)
+            targetFile.text = newContent
+        }
+
+        // Copy GSON JAR to lib
+        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            if (artifact.name == 'gson') {
+                copy {
+                    from artifact.file
+                    into libDir
+                }
+            }
+        }
+
+        // Create VS Code workspace file
+        def workspaceFile = new File(studentProjectDir, "StudentProject.code-workspace")
+        workspaceFile.text = """
+        {
+            "folders": [
+                {
+                    "path": "."
+                }
+            ],
+            "settings": {
+                "java.project.referencedLibraries": [
+                    "lib/**/*.jar"
+                ]
+            }
+        }
+        """.stripIndent().trim()
+    }
+}
+
+prepareStudentProject.finalizedBy(clientJar)
