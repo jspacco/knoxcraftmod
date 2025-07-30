@@ -74,33 +74,38 @@ public class ToroCommand
     {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
-        getOrSpawnToro(player, level);
-        source.sendFailure(Component.literal("Toro summoned."));
+        TorosaurusEntity toro = getOrCreateToro(player, level);
+        moveToroToPlayer(toro, player);
+        source.sendSuccess(() -> Component.literal("Toro summoned."), false);
         return 1;
     }
 
-    private static TorosaurusEntity getOrSpawnToro(ServerPlayer player, ServerLevel level)
+    private static TorosaurusEntity getOrCreateToro(ServerPlayer player, ServerLevel level)
     {
         // get the player's toro, if one exists
         TorosaurusEntity toro = getToro(player.getUUID());
-        if (toro == null) {
-            // can't find the toro, so make a new one
-            toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
-        }
-        LOGGER.debug("Summoning Toro with uuid {}", toro.getUUID());
-        toro.setPos(player.getX(), player.getY(), player.getZ());
-        toro.setOwnerUUID(player.getUUID()); 
+        if (toro != null) return toro;
+
+        // can't find the toro, so make a new one
+        toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
+        LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
+        setToro(player.getUUID(), toro);
+        toro.setOwnerUUID(player.getUUID());
+        // It feels like I should call moveToroToPlayer(toro, player) here, 
+        // but I know it will get called anytime I summon a toro, so I would be doing
+        // that twice. But it still feels like I should set the location here.
+
+        // add Toro to the level
+        level.addFreshEntity(toro);
         
-        // TODO: figure out how to get the direction correct
-        //toro.setYRot(player.getYRot());
-        //toro.setRot(player.getYRot(), player.getXRot());
+        return toro;
+    }
+
+    private static void moveToroToPlayer(TorosaurusEntity toro, ServerPlayer player)
+    {
+        toro.setPos(player.getX(), player.getY(), player.getZ());
         Direction dir = Direction.fromDegrees(player.getYRot());
         toro.setToroDirection(dir);
-        //toro.updateDirectionFromRotation();
-        level.addFreshEntity(toro);
-        // save the toro in the manager
-        setToro(player.getUUID(), toro);
-        return toro;
     }
 
     private static void setToro(UUID uuid, TorosaurusEntity toro) {
@@ -117,7 +122,7 @@ public class ToroCommand
 
         // Find the player's Toro
         // or create a new one if they don't already have one
-        TorosaurusEntity toro = getOrSpawnToro(player, level);
+        TorosaurusEntity toro = getOrCreateToro(player, level);
 
         if (toro == null) {
             LOGGER.error("Cannot find or create a Toro");
