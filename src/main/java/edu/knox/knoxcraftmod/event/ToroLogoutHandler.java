@@ -25,6 +25,7 @@ public class ToroLogoutHandler {
             toro -> toro instanceof TorosaurusEntity torosaurus &&
                     torosaurus.getOwnerUUID().equals(player.getUUID()))
             .forEach(toro -> {
+                toro.stop();
                 String username = event.getEntity().getGameProfile().getName();
                 LOGGER.debug("removing Toro for "+ username);
                 ToroCommand.removeToro(player.getUUID());

@@ -39,6 +39,8 @@ public class ToroCommand
                             StringArgumentType.getString(ctx, "program")))))
                 .then(Commands.literal("list")
                     .executes(ctx -> listPrograms(ctx.getSource())))
+                .then(Commands.literal("stop")
+                    .executes(ctx -> stopToro(ctx.getSource())))
 
         );
         // manual movement commands
@@ -64,6 +66,12 @@ public class ToroCommand
             return 0;
         }
 
+        if (toro.isRunning()) {
+            // Toro must already exist for a manual move
+            ctx.getSource().sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro first. "));
+            return 0;
+        }
+
         toro.moveToro(action);
 
         ctx.getSource().sendSuccess(() -> Component.literal("Toro moved: " + action), false);
@@ -75,8 +83,25 @@ public class ToroCommand
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
         TorosaurusEntity toro = getOrCreateToro(player, level);
+        if (toro.isRunning()) {
+            source.sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro. "));
+            return 0;
+        }
         moveToroToPlayer(toro, player);
         source.sendSuccess(() -> Component.literal("Toro summoned."), false);
+        return 1;
+    }
+
+    private static int stopToro(CommandSourceStack source)
+    {
+        ServerPlayer player = source.getPlayer();
+        TorosaurusEntity toro = getToro(player.getUUID());
+        if (toro == null) {
+            source.sendFailure(Component.literal("No Toro to stop. "));
+            return 0;
+        }
+        toro.stop();
+        source.sendSuccess(() -> Component.literal("Toro stopped."), false);
         return 1;
     }
 
@@ -120,13 +145,15 @@ public class ToroCommand
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
 
-        // Find the player's Toro
-        // or create a new one if they don't already have one
-        TorosaurusEntity toro = getOrCreateToro(player, level);
-
+        TorosaurusEntity toro = getToro(player.getUUID());
+        
         if (toro == null) {
-            LOGGER.error("Cannot find or create a Toro");
-            source.sendFailure(Component.literal("Cannot find or create a Toro. Major error"));
+            source.sendFailure(Component.literal("First summon your Toro with '/toro summon'"));
+            return 0;
+        }
+
+        if (toro.isRunning()) {
+            source.sendFailure(Component.literal("Toro is busy! Wait or stop '/toro stop' "));
             return 0;
         }
 
@@ -138,7 +165,7 @@ public class ToroCommand
         LOGGER.debug("Game Profile name is "+playerName);
         ToroProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(name);
         if (program == null) {
-            source.sendFailure(Component.literal("Program not found."));
+            source.sendFailure(Component.literal(String.format("Program '%s' not found.", name)));
             return 0;
         }
 

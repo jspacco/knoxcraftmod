@@ -31,11 +31,15 @@ import com.mojang.logging.LogUtils;
 public class TorosaurusEntity extends Mob {
     private static final int SUPERFLAT_GROUND_LEVEL = -60;
     private static final String SET_BLOCK = "setBlock";
+
     private static final Logger LOGGER = LogUtils.getLogger();
+    
     public final AnimationState idleAnimationState = new AnimationState();
     private int idleAnimationTimeout = 0;
+    
     private UUID ownerUUID;
 
+    private boolean isRunning = false;
     private List<Instruction> program;
     private int ip = 0;
     
@@ -112,6 +116,7 @@ public class TorosaurusEntity extends Mob {
     {
         this.program = program.getInstructions();
         this.ip = 0;
+        this.isRunning = true;
     }
 
 
@@ -125,13 +130,16 @@ public class TorosaurusEntity extends Mob {
         }
 
         if (!level().isClientSide) {
-        //     // Server sets Y rotation
+            // Server sets Y rotation
             setYRot(getToroDirection().toYaw());
             setYHeadRot(getYRot());
             setYBodyRot(getYRot());
         }
 
-        if (program == null || ip >= program.size()) return;
+        // program ran to completion; stop it
+        if (isRunning && ip >= program.size()) this.stop();
+
+        if (program == null || ip >= program.size() || !isRunning) return;
 
         // fetch the next instruction
         Instruction instr = program.get(ip++);
@@ -319,6 +327,14 @@ public class TorosaurusEntity extends Mob {
         if (!level().isClientSide) {
             this.setYRot(getToroDirection().toYaw());
         }
+    }
+    public boolean isRunning() {
+        return isRunning;
+    }
+    public void stop() {
+        isRunning = false;
+        program = null;
+        ip = -1;
     }
 
 }
