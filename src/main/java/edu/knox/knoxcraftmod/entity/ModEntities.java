@@ -2,7 +2,6 @@ package edu.knox.knoxcraftmod.entity;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
-import edu.knox.knoxcraftmod.entity.custom.TriceratopsEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -13,10 +12,6 @@ import net.minecraftforge.registries.RegistryObject;
 public class ModEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = 
         DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, KnoxcraftMod.MODID);
-
-    public static final RegistryObject<EntityType<TriceratopsEntity>> TRICERATOPS =
-        ENTITY_TYPES.register("triceratops", () -> EntityType.Builder.of(TriceratopsEntity::new, MobCategory.CREATURE)
-            .sized(1.5f, 1.5f).build("triceratops"));
 
     public static final RegistryObject<EntityType<TorosaurusEntity>> TOROSAURUS =
         ENTITY_TYPES.register("torosaurus", () -> EntityType.Builder.of(TorosaurusEntity::new, MobCategory.CREATURE)
