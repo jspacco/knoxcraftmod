@@ -1,7 +1,6 @@
 package edu.knox.knoxcraftmod.entity.custom;
 
 import edu.knox.knoxcraftmod.entity.ModEntities;
-import edu.knox.knoxcraftmod.item.ModItems;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.AnimationState;
@@ -36,7 +35,7 @@ public class TriceratopsEntity extends Animal {
 
     @Override
     public boolean isFood(ItemStack pStack) {
-        return pStack.is(ModItems.ALEXANDRITE.get());
+        return false;
     }
 
     @Override
