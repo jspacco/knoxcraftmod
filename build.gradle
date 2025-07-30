@@ -289,3 +289,12 @@ task prepareStudentProject {
 }
 
 prepareStudentProject.finalizedBy(clientJar)
+
+tasks.named('javadoc') {
+    doFirst {
+        source = source.filter { file ->
+            file.path.contains("edu/knox/knoxcraftmod/client") &&
+            !file.name.endsWith("Example.java")
+        }
+    }
+}

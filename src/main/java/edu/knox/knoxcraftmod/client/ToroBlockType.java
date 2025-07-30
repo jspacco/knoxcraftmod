@@ -1,7 +1,13 @@
 package edu.knox.knoxcraftmod.client;
 
+/**
+ * Enum (constants) for all of the vanilal textures in Minecraft 1.21.x
+ * 
+ * These are mostly listed here:
+ * 
+ * https://minecraft.fandom.com/wiki/List_of_block_textures
+ */
 public enum ToroBlockType {
-    EXAMPLE_BLOCK("knoxcraftmod:example_block"),
     ACACIA_BUTTON("minecraft:acacia_button"),
     ACACIA_DOOR("minecraft:acacia_door"),
     ACACIA_FENCE("minecraft:acacia_fence"),

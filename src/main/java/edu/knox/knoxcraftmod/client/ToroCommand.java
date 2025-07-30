@@ -1,6 +1,6 @@
 package edu.knox.knoxcraftmod.client;
 
-public enum ToroCommand 
+enum ToroCommand 
 {
     FORWARD("forward"),
     BACK("back"),

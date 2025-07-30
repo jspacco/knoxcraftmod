@@ -56,10 +56,41 @@ public class ToroUploader
     private String password;
     private String minecraftPlayername;
 
-    public ToroUploader(String serverUrl, String minecraftPlayerName) {
-        this(serverUrl, minecraftPlayerName, "", "");
+    /**
+     * Create a new Toro that will upload to the given server URL
+     * for the given minecraft player name. 
+     * 
+     * The minecraft player name is <b>NOT</b> case sensitive.
+     * 
+     * The serverUrl should be given to you by your instructor.
+     * 
+     * <b>NOTE</b> This constructor assumes no authentication
+     * will be required by the server; ask your instrutor about this.
+     * @param serverUrl
+     * @param minecraftPlayername
+     */
+    public ToroUploader(String serverUrl, String minecraftPlayername) {
+        this(serverUrl, minecraftPlayername, "", "");
     }
 
+    /**
+     * Create a new Toro that will upload to the given server URL
+     * for the given minecraft player name, using the 
+     * given username and password for authentication.
+     * 
+     * The minecraft player name is <b>NOT</b> case sensitive.
+     * 
+     * The serverUrl will be given to you by your instructor.
+     * 
+     * The username and password will be given to you by your instructor.
+     * 
+     * <b>DO NOT USE YOUR PASSWORD FOR YOUR COLLEGE EMAIL ADDRESS</b>.
+     * This is a different password only used for Knoxcraft.
+     * @param serverUrl
+     * @param minecraftPlayername
+     * @param username
+     * @param password
+     */
     public ToroUploader(String serverUrl, String minecraftPlayername, String username, String password) {
         this.serverUrl = serverUrl;
         this.username = username;
@@ -71,10 +102,16 @@ public class ToroUploader
     
 
     /**
-     * Upload the Toro program to the minecraft server
-     * using the serverURL passed into the constructor.
+     * Upload the Toro program to the minecraft server.
      * 
-     * minecraftPlayername is required.
+     * The upload goes to the serverUrl passed into the
+     * constructor, and will assign the Toro to the 
+     * player with the minecraftPlayername given to the
+     * constructor.
+     * 
+     * The program is converted to JSON and transmitted
+     * to the server as a String. No student code actually 
+     * runs on the Minecraft server.
      * 
      * @param toro
      */
