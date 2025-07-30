@@ -82,6 +82,10 @@ public class ToroCommand
     {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
+        if (player.getY() >= level.getMaxBuildHeight()) {
+            source.sendFailure(Component.literal("Cannot summon Toro above max build height. "));
+            return 0;
+        }
         TorosaurusEntity toro = getOrCreateToro(player, level);
         if (toro.isRunning()) {
             source.sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro. "));

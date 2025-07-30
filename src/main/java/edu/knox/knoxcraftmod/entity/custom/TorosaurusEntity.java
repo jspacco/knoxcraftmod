@@ -30,6 +30,7 @@ import com.mojang.logging.LogUtils;
 
 public class TorosaurusEntity extends Mob {
     private static final int SUPERFLAT_GROUND_LEVEL = -60;
+    private final int MAX_Y;
     private static final String SET_BLOCK = "setBlock";
 
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -43,12 +44,16 @@ public class TorosaurusEntity extends Mob {
     private List<Instruction> program;
     private int ip = 0;
     
+    // The direction (NORTH, SOUTH, EAST, WEST) is encoded as an int
+    // that is always stored on the server. We always get the int from
+    // the server and never update it on the client side.
     private static final EntityDataAccessor<Integer> DIRECTION =
         SynchedEntityData.defineId(TorosaurusEntity.class, EntityDataSerializers.INT);
 
 
     public TorosaurusEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
+        this.MAX_Y = level.getMaxBuildHeight();
         // toros can fly
         this.setNoGravity(true);
         this.setInvulnerable(true);
@@ -134,6 +139,11 @@ public class TorosaurusEntity extends Mob {
             setYRot(getToroDirection().toYaw());
             setYHeadRot(getYRot());
             setYBodyRot(getYRot());
+            // This should never happen!
+            // but if it somehow does, move the Toro to the highest legal location
+            if (this.getY() >= MAX_Y) {
+                this.setPos(this.getX(), MAX_Y - 1, this.getZ());
+            }
         }
 
         // program ran to completion; stop it
@@ -191,10 +201,15 @@ public class TorosaurusEntity extends Mob {
     public void moveToro(String command)
     {
         BlockPos current = blockPosition();
-        
+
         BlockPos target = switch (command) {
             case "forward" -> offset(current, getToroDirection());
-            case "up" -> current.above();
+            case "up" -> {
+                if (current.getY() >= MAX_Y) {
+                    yield current;
+                }
+                yield current.above();
+            }
             case "down" -> {
                 // can't set blocks below the bottom
                 if (current.getY() <= SUPERFLAT_GROUND_LEVEL) {
