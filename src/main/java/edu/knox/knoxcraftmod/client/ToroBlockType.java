@@ -3,11 +3,12 @@ package edu.knox.knoxcraftmod.client;
 /**
  * Enum (constants) for all of the vanilal textures in Minecraft 1.21.x
  * 
- * These are mostly listed here:
- * 
- * https://minecraft.fandom.com/wiki/List_of_block_textures
+ * To see these in the game, hit E to bring up your crafting 
+ * menu then click the icon on the right, and search for 
+ * a block. This will show you what a block will look like.
  */
 public enum ToroBlockType {
+    
     ACACIA_BUTTON("minecraft:acacia_button"),
     ACACIA_DOOR("minecraft:acacia_door"),
     ACACIA_FENCE("minecraft:acacia_fence"),
@@ -347,6 +348,9 @@ public enum ToroBlockType {
     DIORITE_SLAB("minecraft:diorite_slab"),
     DIORITE_STAIRS("minecraft:diorite_stairs"),
     DIORITE_WALL("minecraft:diorite_wall"),
+    /**
+     * <img src="https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.8/assets/minecraft/textures/block/dirt.png"/>
+     */
     DIRT("minecraft:dirt"),
     DIRT_PATH("minecraft:dirt_path"),
     DISPENSER("minecraft:dispenser"),

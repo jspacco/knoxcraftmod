@@ -54,6 +54,21 @@ public class ToroCommand
                 .executes(ctx -> manualMove(ctx, action)));
         }
         dispatcher.register(base);
+
+        //TODO: restrict to ops only
+        dispatcher.register(
+            Commands.literal("dumpblocks").executes(ctx -> {
+                try {
+                    tools.BlockDumper.dumpBlockModels(ctx.getSource().getLevel());
+                } catch (Exception e) {
+                    ctx.getSource().sendFailure(Component.literal("failure! " +e.toString()));
+                    return 0;
+                }
+                
+                ctx.getSource().sendSuccess(() -> Component.literal("Success"), false);
+                return 1;
+            }
+        ));
     }
 
     private static int manualMove(CommandContext<CommandSourceStack> ctx, String action) {

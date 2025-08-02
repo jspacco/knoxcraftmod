@@ -1,0 +1,16 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "generator": {
+        "type": "minecraft:noise",
+        "settings": "knoxcraftmod:superflat",
+        "seed": 0,
+        "biome_source": {
+          "type": "minecraft:fixed",
+          "biome": "minecraft:plains"
+        }
+      },
+      "type": "minecraft:overworld"
+    }
+  }
+}
