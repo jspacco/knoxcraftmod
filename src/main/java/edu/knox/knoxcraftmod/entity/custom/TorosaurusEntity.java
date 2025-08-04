@@ -2,6 +2,7 @@ package edu.knox.knoxcraftmod.entity.custom;
 
 import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
+import edu.knox.knoxcraftmod.command.SerialToroProgram;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -39,6 +40,9 @@ public class TorosaurusEntity extends Mob {
     private int idleAnimationTimeout = 0;
     
     private UUID ownerUUID;
+    
+    // is this a thread?
+    private boolean isThread;
 
     private boolean isRunning = false;
     private List<Instruction> program;
@@ -51,9 +55,10 @@ public class TorosaurusEntity extends Mob {
         SynchedEntityData.defineId(TorosaurusEntity.class, EntityDataSerializers.INT);
 
 
+
     public TorosaurusEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
-        this.MAX_Y = level.getMaxBuildHeight();
+            this.MAX_Y = level.getMaxBuildHeight();
         // toros can fly
         this.setNoGravity(true);
         this.setInvulnerable(true);
@@ -117,9 +122,9 @@ public class TorosaurusEntity extends Mob {
         }
     }
 
-    public void runProgram(ToroProgram program)
+    public void runProgram(List<Instruction> instructions)
     {
-        this.program = program.getInstructions();
+        this.program = instructions;
         this.ip = 0;
         this.isRunning = true;
     }
@@ -147,7 +152,10 @@ public class TorosaurusEntity extends Mob {
         }
 
         // program ran to completion; stop it
-        if (isRunning && ip >= program.size()) this.stop();
+        if (isRunning && ip >= program.size()) {
+            // TODO: remove yourself
+            this.stop();
+        }
 
         if (program == null || ip >= program.size() || !isRunning) return;
 
@@ -343,13 +351,29 @@ public class TorosaurusEntity extends Mob {
             this.setYRot(getToroDirection().toYaw());
         }
     }
+
+    //TODO: move into ToroCommand and be isRunning(UUID or ServerPlayer)
     public boolean isRunning() {
         return isRunning;
     }
+
     public void stop() {
         isRunning = false;
         program = null;
         ip = -1;
+        if (isThread){
+            this.discard();
+            //TODO: tell ToroCommand this thread is done
+        }
+
+    }
+
+    public boolean isThread() {
+        return isThread;
+    }
+
+    public void setIsThread(boolean isThread) {
+        this.isThread = isThread;
     }
 
 }

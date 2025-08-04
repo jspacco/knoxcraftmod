@@ -15,7 +15,6 @@ public class PyramidExample {
         String username = "test";
         // TODO: the password provided for you by your instructor
         String password = "foobar123";
-        ToroUploader uploader = new ToroUploader(serverUrl,minecraftPlayername, username, password);
         
         String programName = "pyramid";
         String description = "Draw a pyramid.";
@@ -41,7 +40,7 @@ public class PyramidExample {
             toro.up();
         }
 
-        uploader.uploadProgram(toro);
+        ToroUploader.upload(serverUrl, toro, minecraftPlayername, username, password);
     }
     
 }

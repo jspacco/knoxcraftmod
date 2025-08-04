@@ -14,9 +14,8 @@ public class ToroClientExample
         String username = "test";
         // TODO: the password provided for you by your instructor
         String password = "foobar123";
-        ToroUploader uploader = new ToroUploader(serverUrl,minecraftPlayername, username, password);
+        //ToroUploader uploader = new ToroUploader(serverUrl,minecraftPlayername, username, password);
         
-        //String programName = "test2";
         String programName = "flump";
         String description = "This is an example program.";
 
@@ -30,7 +29,7 @@ public class ToroClientExample
             toro.setBlock(ToroBlockType.DIRT);
         }
 
-        uploader.uploadProgram(toro);
+        ToroUploader.upload(serverUrl, toro, minecraftPlayername, username, password);
     }
 }
 

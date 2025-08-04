@@ -27,9 +27,8 @@ public class ToroLogoutHandler {
             .forEach(toro -> {
                 toro.stop();
                 String username = event.getEntity().getGameProfile().getName();
-                LOGGER.debug("removing Toro for "+ username);
-                ToroCommand.removeToro(player.getUUID());
-                toro.discard();
+                LOGGER.info("removing Toro for "+ username+" on logout");
+                ToroCommand.removeToroMapping(player.getUUID());
             });
     }
 }

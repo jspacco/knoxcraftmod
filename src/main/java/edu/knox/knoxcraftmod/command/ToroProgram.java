@@ -3,22 +3,25 @@ package edu.knox.knoxcraftmod.command;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
-public class ToroProgram
+public abstract class ToroProgram
 {
-    private String programName;
-    private String description;
-    private List<Instruction> instructions;
+    protected String programName;
+    protected String description;
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public ToroProgram() {}
 
-    public ToroProgram(String programName, String description, List<Instruction> instructions) {
+    public ToroProgram(String programName, String description) {
         this.programName = programName;
         this.description = description;
-        this.instructions = instructions;
     }
 
     public String getProgramName() {
@@ -29,47 +32,47 @@ public class ToroProgram
         return description;
     }
 
-    public List<Instruction> getInstructions() {
-        return instructions;
-    }
-
-    public CompoundTag toNBT() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("description", description);
-
+    protected ListTag toNBT(List<Instruction> instructions) {
         ListTag instructionList = new ListTag();
         for (Instruction instr : instructions) {
             instructionList.add(instr.toNBT());
         }
-        tag.put("instructions", instructionList);
-
-        return tag;
+        return instructionList;
     }
 
+    public abstract Tag toNBT();
+
     public static ToroProgram fromNBT(String name, CompoundTag tag) {
+        String type = tag.getString("type");
+        if (!type.equals("parallel") && !type.equals("serial")){
+            LOGGER.error("Unknown ToroProgram type: "+type);
+            throw new IllegalStateException("Unknown ToroProgram type: "+type);
+        }
         String description = tag.getString("description");
 
-        ListTag instructionList = tag.getList("instructions", Tag.TAG_COMPOUND);
-        List<Instruction> instructions = new ArrayList<>();
+        if (type.equals("parallel")) {
+            ListTag outerList = tag.getList("threads", Tag.TAG_LIST);
+            List<List<Instruction>> instructions = new ArrayList<>();
+            for (int i = 0; i < outerList.size(); i++) {
+                ListTag innerList = (ListTag) outerList.get(i);
+                List<Instruction> thread = readFromTag(innerList);
+                instructions.add(thread);
+            }
+            return new ParallelToroProgram(name, description, instructions);
+        } else {
+            ListTag instructionList = tag.getList("instructions", Tag.TAG_COMPOUND);
+            List<Instruction> instructions = readFromTag(instructionList);
+            return new SerialToroProgram(name, description, instructions);
+        }
+    }
+    
+    private static List<Instruction> readFromTag(ListTag instructionList) {
+         List<Instruction> instructions = new ArrayList<>();
         for (Tag t : instructionList) {
             if (t instanceof CompoundTag instrTag) {
                 instructions.add(Instruction.fromNBT(instrTag));
             }
         }
-
-        return new ToroProgram(name, description, instructions);
+        return instructions;
     }
-
-    @Override
-    public String toString() {
-        StringBuilder b = new StringBuilder();
-        b.append(programName);
-        b.append("\n");
-        b.append(description);
-        b.append("\n");
-        b.append(instructions);
-
-        return b.toString();
-    }
-    
 }

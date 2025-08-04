@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,11 +51,76 @@ public class ToroUploader
         GSON = gsonBuilder.create();
     }
 
-    private HttpClient httpClient;
-    private String serverUrl;
-    private String username;
-    private String password;
-    private String minecraftPlayername;
+    public static void upload(String serverUrl, 
+        Toro toro,
+        String minecraftPlayername,
+        String username, String password)
+    {
+        Map<String, Object> json = Map.of(
+            "programName", toro.getProgramName(),
+            "description", toro.getDescription(),
+            "instructions", toro.getInstructions());
+        
+        String jsonPayload = GSON.toJson(json);
+
+        upload(serverUrl, "serial", jsonPayload, 
+            minecraftPlayername,
+            username, password);
+    }
+
+    public static void upload(String serverUrl, 
+        ParallelToro toro,
+        String minecraftPlayername,
+        String username, String password)
+    {
+        Map<String, Object> json = Map.of(
+            "programName", toro.getProgramName(),
+            "description", toro.getDescription(),
+            "threads", toro.getAllThreads());
+        
+        String jsonPayload = GSON.toJson(json);
+
+        upload(serverUrl, "parallel", jsonPayload, 
+            minecraftPlayername,
+            username, password);
+    }
+
+    private static void upload(String serverUrl, 
+        String type, String json,
+        String minecraftPlayername,
+        String username, String password)
+    {
+        HttpClient client = HttpClient.newHttpClient();
+        System.out.println(json);
+        // Send the POST request to the server
+        // Handle the response and any errors
+        // sending username and password as custom headers
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(serverUrl + "/upload"))
+            .header("Content-Type", "application/json")
+            .header("X-MinecraftPlayername", minecraftPlayername)
+            .header("X-Username", username)
+            .header("X-Password", password)
+            .header("X-Type", type)
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
+        try {
+            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                System.out.println("Upload Successful");
+            } else {
+                System.out.println("Upload failed " +response.body());
+            }
+        } catch (Exception e) {
+            System.out.println("Upload failed with exception! " +e.toString());
+        }
+    }
+
+    // private HttpClient httpClient;
+    // private String serverUrl;
+    // private String username;
+    // private String password;
+    // private String minecraftPlayername;
 
     /**
      * Create a new Toro that will upload to the given server URL
@@ -69,9 +135,9 @@ public class ToroUploader
      * @param serverUrl
      * @param minecraftPlayername
      */
-    public ToroUploader(String serverUrl, String minecraftPlayername) {
-        this(serverUrl, minecraftPlayername, "", "");
-    }
+    // public ToroUploader(String serverUrl, String minecraftPlayername) {
+    //     this(serverUrl, minecraftPlayername, "", "");
+    // }
 
     /**
      * Create a new Toro that will upload to the given server URL
@@ -91,13 +157,13 @@ public class ToroUploader
      * @param username
      * @param password
      */
-    public ToroUploader(String serverUrl, String minecraftPlayername, String username, String password) {
-        this.serverUrl = serverUrl;
-        this.username = username;
-        this.password = password;
-        this.minecraftPlayername = minecraftPlayername;
-        this.httpClient = HttpClient.newHttpClient();
-    }
+    // public ToroUploader(String serverUrl, String minecraftPlayername, String username, String password) {
+    //     this.serverUrl = serverUrl;
+    //     this.username = username;
+    //     this.password = password;
+    //     this.minecraftPlayername = minecraftPlayername;
+    //     this.httpClient = HttpClient.newHttpClient();
+    // }
 
     
 
@@ -115,31 +181,31 @@ public class ToroUploader
      * 
      * @param toro
      */
-    public void uploadProgram(Toro toro)
-    {
-        String jsonPayload = GSON.toJson(toro);
-        System.out.println(jsonPayload);
-        // Send the POST request to the server
-        // Handle the response and any errors
-        // sending username and password as custom headers
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(serverUrl + "/upload"))
-            .header("Content-Type", "application/json")
-            .header("X-MinecraftPlayername", minecraftPlayername)
-            .header("X-Username", username)
-            .header("X-Password", password)
-            .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-            .build();
-        try {
-            HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
-                System.out.println("Upload Successful");
-            } else {
-                System.out.println("Upload failed " +response.body());
-            }
-        } catch (Exception e) {
-            System.out.println("Upload failed with exception! " +e.toString());
-        }
+    // public void uploadProgram(Toro toro)
+    // {
+    //     String jsonPayload = GSON.toJson(toro);
+    //     System.out.println(jsonPayload);
+    //     // Send the POST request to the server
+    //     // Handle the response and any errors
+    //     // sending username and password as custom headers
+    //     HttpRequest request = HttpRequest.newBuilder()
+    //         .uri(URI.create(serverUrl + "/upload"))
+    //         .header("Content-Type", "application/json")
+    //         .header("X-MinecraftPlayername", minecraftPlayername)
+    //         .header("X-Username", username)
+    //         .header("X-Password", password)
+    //         .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+    //         .build();
+    //     try {
+    //         HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+    //         if (response.statusCode() == 200) {
+    //             System.out.println("Upload Successful");
+    //         } else {
+    //             System.out.println("Upload failed " +response.body());
+    //         }
+    //     } catch (Exception e) {
+    //         System.out.println("Upload failed with exception! " +e.toString());
+    //     }
 
-    }
+    // }
 }

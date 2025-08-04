@@ -1,5 +1,6 @@
 package edu.knox.knoxcraftmod.command;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import edu.knox.knoxcraftmod.entity.ModEntities;
 import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
@@ -26,6 +28,7 @@ public class ToroCommand
 {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static Map<UUID, TorosaurusEntity> toroMap = new HashMap<>();
+    private static Map<UUID, List<TorosaurusEntity>> threadMap = new HashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -74,14 +77,14 @@ public class ToroCommand
     private static int manualMove(CommandContext<CommandSourceStack> ctx, String action) {
         ServerPlayer player = ctx.getSource().getPlayer();
 
-        TorosaurusEntity toro = getToro(player.getUUID());
+        TorosaurusEntity toro = getMainToro(player.getUUID());
         if (toro == null) {
             // Toro must already exist for a manual move
             ctx.getSource().sendFailure(Component.literal("Toro not found."));
             return 0;
         }
 
-        if (toro.isRunning()) {
+        if (isRunning(player.getUUID())) {
             // Toro must already exist for a manual move
             ctx.getSource().sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro first. "));
             return 0;
@@ -93,6 +96,15 @@ public class ToroCommand
         return 1;
     }
 
+    private static boolean isRunning(UUID playerId) {
+        if (!hasMainToro(playerId)) return false;
+        TorosaurusEntity toro = getMainToro(playerId);
+        // either the main toro is running (serial/single thread)
+        // or one of the threads is running
+        return toro.isRunning() || threadMap.containsKey(playerId) && 
+            threadMap.get(playerId).stream().anyMatch(t -> t.isRunning());
+    }
+
     private static int summonToro(CommandSourceStack source)
     {
         ServerPlayer player = source.getPlayer();
@@ -102,11 +114,11 @@ public class ToroCommand
             return 0;
         }
         TorosaurusEntity toro = getOrCreateToro(player, level);
-        if (toro.isRunning()) {
+        if (isRunning(player.getUUID())) {
             source.sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro. "));
             return 0;
         }
-        moveToroToPlayer(toro, player);
+        moveToroToEntity(toro, player);
         source.sendSuccess(() -> Component.literal("Toro summoned."), false);
         return 1;
     }
@@ -114,12 +126,18 @@ public class ToroCommand
     private static int stopToro(CommandSourceStack source)
     {
         ServerPlayer player = source.getPlayer();
-        TorosaurusEntity toro = getToro(player.getUUID());
+        UUID uuid = player.getUUID();
+        TorosaurusEntity toro = getMainToro(uuid);
         if (toro == null) {
             source.sendFailure(Component.literal("No Toro to stop. "));
             return 0;
         }
         toro.stop();
+        if (threadMap.containsKey(uuid)) {
+            for (TorosaurusEntity t : threadMap.get(uuid)){
+                t.stop();
+            }
+        }
         source.sendSuccess(() -> Component.literal("Toro stopped."), false);
         return 1;
     }
@@ -127,7 +145,7 @@ public class ToroCommand
     private static TorosaurusEntity getOrCreateToro(ServerPlayer player, ServerLevel level)
     {
         // get the player's toro, if one exists
-        TorosaurusEntity toro = getToro(player.getUUID());
+        TorosaurusEntity toro = getMainToro(player.getUUID());
         if (toro != null) return toro;
 
         // can't find the toro, so make a new one
@@ -141,14 +159,16 @@ public class ToroCommand
 
         // add Toro to the level
         level.addFreshEntity(toro);
+        LOGGER.debug("Toro fresh entity added");
         
         return toro;
     }
 
-    private static void moveToroToPlayer(TorosaurusEntity toro, ServerPlayer player)
+    private static void moveToroToEntity(TorosaurusEntity toro, Entity entity)
     {
-        toro.setPos(player.getX(), player.getY(), player.getZ());
-        Direction dir = Direction.fromDegrees(player.getYRot());
+        // moves the toro to the entity's location, matches the entities heading as well
+        toro.setPos(entity.getX(), entity.getY(), entity.getZ());
+        Direction dir = Direction.fromDegrees(entity.getYRot());
         toro.setToroDirection(dir);
     }
 
@@ -156,22 +176,26 @@ public class ToroCommand
         toroMap.put(uuid, toro);
     }
 
-    public static TorosaurusEntity getToro(UUID uuid) {
+    private static TorosaurusEntity getMainToro(UUID uuid) {
         return toroMap.get(uuid);
+    }
+
+    private static boolean hasMainToro(UUID uuid) {
+        return toroMap.containsKey(uuid);
     }
 
     private static int runProgram(CommandSourceStack source, String name) {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
 
-        TorosaurusEntity toro = getToro(player.getUUID());
+        TorosaurusEntity toro = getMainToro(player.getUUID());
         
         if (toro == null) {
             source.sendFailure(Component.literal("First summon your Toro with '/toro summon'"));
             return 0;
         }
 
-        if (toro.isRunning()) {
+        if (isRunning(player.getUUID())) {
             source.sendFailure(Component.literal("Toro is busy! Wait or stop '/toro stop' "));
             return 0;
         }
@@ -188,9 +212,43 @@ public class ToroCommand
             return 0;
         }
 
-        toro.runProgram(program);
+        if (program instanceof SerialToroProgram serial) {
+            // serial (single thread) program
+            toro.runProgram(serial.getInstructions());
+        } else if (program instanceof ParallelToroProgram parallel){
+            // Parallel
+            // create and run toro thread for each set of instructions
+            for (List<Instruction> instructions : parallel.getThreads()) {
+                TorosaurusEntity thread = spawnToroThread(player, level, toro);
+                // start running the list of instructions
+                thread.runProgram(instructions);
+            }
+        } else {
+            LOGGER.error("Program is type {} which is not serial or parallel", program.getClass());
+            source.sendFailure(Component.literal("Error! Program is type "+program.getClass()+", not serial or parallel; this should never happen"));
+            return 0;
+        }
+
+        
         source.sendSuccess(() -> Component.literal("Program loaded!"), false);
         return 1;
+    }
+
+    private static TorosaurusEntity spawnToroThread(ServerPlayer player, ServerLevel level, Entity entity) {
+        TorosaurusEntity toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
+        LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
+        // add toro thread to our map
+        addToroThread(player.getUUID(), toro);
+        // set owner to player
+        toro.setOwnerUUID(player.getUUID());
+        // move to match the location of the entity (which is the original toro)
+        moveToroToEntity(toro, entity);
+        level.addFreshEntity(toro);
+        return toro;
+    }
+
+    private static void addToroThread(UUID uuid, TorosaurusEntity toro) {
+        threadMap.computeIfAbsent(uuid, id -> new ArrayList<TorosaurusEntity>());
     }
 
     private static int listPrograms(CommandSourceStack source) {
@@ -214,9 +272,10 @@ public class ToroCommand
         return 1;
     }
 
-    public static void removeToro(UUID uuid) {
+    public static void removeToroMapping(UUID uuid) {
         if (uuid != null){
             toroMap.remove(uuid);
+            threadMap.remove(uuid);
         }
     }
 

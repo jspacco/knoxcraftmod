@@ -15,6 +15,8 @@ import com.google.gson.Gson;
 import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.KnoxcraftConfig;
+import edu.knox.knoxcraftmod.command.ParallelToroProgram;
+import edu.knox.knoxcraftmod.command.SerialToroProgram;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import edu.knox.knoxcraftmod.data.ToroProgramData;
 
@@ -71,10 +73,11 @@ public class HttpServerManager {
                 exchange.sendResponseHeaders(405, -1);
                 return;
             }
-            //TODO: username is not the minecraft username
+
             String username = exchange.getRequestHeaders().getFirst("X-Username");
             String password = exchange.getRequestHeaders().getFirst("X-Password");
             String minecraftPlayername = exchange.getRequestHeaders().getFirst("X-MinecraftPlayername");
+            String type = exchange.getRequestHeaders().getFirst("X-Type");
             
             if (LOGIN_REQUIRED && (username == null || password == null)) {
                 send(exchange, 400, "Missing login credentials in headers");
@@ -88,18 +91,26 @@ public class HttpServerManager {
                 return;
             }
 
-            ToroProgram program = GSON.fromJson(
-                new InputStreamReader(exchange.getRequestBody()), ToroProgram.class);
-
-            LOGGER.trace("Program: {}", program);
-
             // Store the program
             ServerLevel level = server.getLevel(ServerLevel.OVERWORLD);
             ToroProgramData data = ToroProgramData.get(level);
 
-            // add the program with the username
+            if (!type.equals("serial") && !type.equals("parallel")) {
+                LOGGER.error("Unknown type "+type);
+            }
+            ToroProgram program = null;
+            if (type.equals("serial")) {
+                program = GSON.fromJson(
+                    new InputStreamReader(exchange.getRequestBody()), SerialToroProgram.class);
+                LOGGER.trace("Serial Program: {}", program);
+                // add the program with the username
+            } else if (type.equals("parallel")) {
+                program = GSON.fromJson(
+                    new InputStreamReader(exchange.getRequestBody()), ParallelToroProgram.class);
+                    LOGGER.trace("Parallel Program: {}", program);
+                
+            }
             data.addProgram(minecraftPlayername, program);
-
             send(exchange, 200, "Program uploaded successfully");
         } catch (Exception e) {
             e.printStackTrace();
