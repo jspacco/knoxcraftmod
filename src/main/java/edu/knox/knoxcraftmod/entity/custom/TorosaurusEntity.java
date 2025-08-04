@@ -352,7 +352,6 @@ public class TorosaurusEntity extends Mob {
         }
     }
 
-    //TODO: move into ToroCommand and be isRunning(UUID or ServerPlayer)
     public boolean isRunning() {
         return isRunning;
     }

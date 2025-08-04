@@ -24,11 +24,12 @@ public class ToroLogoutHandler {
         player.serverLevel().getEntities(ModEntities.TOROSAURUS.get(), 
             toro -> toro instanceof TorosaurusEntity torosaurus &&
                     torosaurus.getOwnerUUID().equals(player.getUUID()))
-            .forEach(toro -> {
-                toro.stop();
+            .forEach(t -> {
+                t.stop();
                 String username = event.getEntity().getGameProfile().getName();
                 LOGGER.info("removing Toro for "+ username+" on logout");
-                ToroCommand.removeToroMapping(player.getUUID());
+                t.discard();
             });
+        ToroCommand.removeToroMapping(player.getUUID());
     }
 }

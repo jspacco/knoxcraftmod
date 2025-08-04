@@ -220,6 +220,7 @@ public class ToroCommand
             // create and run toro thread for each set of instructions
             for (List<Instruction> instructions : parallel.getThreads()) {
                 TorosaurusEntity thread = spawnToroThread(player, level, toro);
+                thread.setIsThread(true);
                 // start running the list of instructions
                 thread.runProgram(instructions);
             }
