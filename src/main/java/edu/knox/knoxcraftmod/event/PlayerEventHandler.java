@@ -10,6 +10,13 @@ import net.minecraftforge.event.level.BlockEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
+/**
+ * EventHandler will cancel/prevent these actions:
+ *  - manually placing blocks
+ *  - manually breaking blocks
+ *  - using items
+ *  - picking up items
+ */
 @Mod.EventBusSubscriber(modid = KnoxcraftMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class PlayerEventHandler {
 
