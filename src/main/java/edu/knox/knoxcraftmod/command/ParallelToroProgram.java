@@ -22,14 +22,14 @@ public class ParallelToroProgram extends ToroProgram {
 
     public Tag toNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.putString("type", "parallel");
-        tag.putString("description", description);
+        tag.putString(TYPE, PARALLEL);
+        tag.putString(DESCRIPTION, description);
         ListTag threadTag = new ListTag();
         for (List<Instruction> thread : threads) {
             ListTag instructionList = toNBT(thread);
             threadTag.add(instructionList);
         }
-        tag.put("threads", threadTag);
+        tag.put(THREADS, threadTag);
 
         return tag;
     }
@@ -40,7 +40,7 @@ public class ParallelToroProgram extends ToroProgram {
 
         buf.append("ProgramName: "+programName);
         buf.append("\n");
-buf.append("Description: "+description);
+        buf.append("Description: "+description);
         buf.append("\n");
         buf.append(String.format("Has {} threads", threads.size()));
         buf.append("\n");

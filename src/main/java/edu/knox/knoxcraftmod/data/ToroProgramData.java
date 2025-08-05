@@ -2,6 +2,7 @@ package edu.knox.knoxcraftmod.data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 
@@ -17,6 +18,9 @@ import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
 public class ToroProgramData extends SavedData {
+    private static final String PROGRAMS = "programs";
+    private static final String USERNAME = "username";
+    private static final String USERS = "users";
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final SavedData.Factory<ToroProgramData> FACTORY =
         new SavedData.Factory<>(
@@ -42,7 +46,74 @@ public class ToroProgramData extends SavedData {
         return save(tag);
     }
     
+    /*
+{"data" : 
+    {
+        "dev" : 
+        {
+            "pyramid" : 
+            {
+                "type" : "serial",
+                "description" : "STRING",
+                "instructions" : 
+                [
+                    {"cmd" : "forward"},
+                    {"cmd" : "setblock", "blk" : "minecraft:dirt"}
+                ]
+            },
+            "parallelpyramid" : 
+            {
+                "type" : "parallel",
+                "description" : "string",
+                "threads" : 
+                [
+                    [
+                        {"cmd" : "forward"},
+                        {"cmd" : "right"}
+                    ],
+                    [
+                        {"cmd" : "back"}
+                        {"cmd" : "setblock", "blk" : "minecraft:dirt"}
+                    ]
+                ]
+            }
+        }
+    }
+}
+    */
     public CompoundTag save(CompoundTag tag) {
+        // iterate through Map<String, Map<String, ToroProgram>> programs
+        for (Entry<String, Map<String, ToroProgram>> entry : programs.entrySet()) {
+            String username = entry.getKey();
+            Map<String, ToroProgram> programMap = entry.getValue();
+            
+            CompoundTag programTag = new CompoundTag();
+            programMap.forEach((programName, toroProgram) -> {
+                programTag.put(programName, toroProgram.toNBT());
+            });
+            tag.put(username, programTag);
+        }
+        return tag;
+    }
+
+    private ToroProgramData load(CompoundTag tag)
+    {
+        ToroProgramData data = new ToroProgramData();
+        // go through each CompoundTag in tag
+        for (String username : tag.getAllKeys()) {
+            Map<String, ToroProgram> map = new HashMap<>();
+            CompoundTag allProgramsTag = tag.getCompound(username);
+            for (String programName : allProgramsTag.getAllKeys()) {
+                CompoundTag programTag = allProgramsTag.getCompound(programName);
+                ToroProgram toroProgram = ToroProgram.fromNBT(programName, programTag);
+                map.put(programName, toroProgram);
+            }
+            data.programs.put(username, map);
+        }
+        return data;
+    }
+    
+    public CompoundTag save2(CompoundTag tag) {
         ListTag userList = new ListTag();
 
         for (var entry : programs.entrySet()) {
@@ -50,30 +121,30 @@ public class ToroProgramData extends SavedData {
             Map<String, ToroProgram> userPrograms = entry.getValue();
 
             CompoundTag userTag = new CompoundTag();
-            userTag.putString("username", username);
+            userTag.putString(USERNAME, username);
 
             CompoundTag programsTag = new CompoundTag();
             for (var programEntry : userPrograms.entrySet()) {
                 programsTag.put(programEntry.getKey(), programEntry.getValue().toNBT());
             }
 
-            userTag.put("programs", programsTag);
+            userTag.put(PROGRAMS, programsTag);
             userList.add(userTag);
         }
 
-        tag.put("users", userList);
+        tag.put(USERS, userList);
         return tag;
     }
 
-    private ToroProgramData load(CompoundTag tag)
+    private ToroProgramData load2(CompoundTag tag)
     {
         ToroProgramData data = new ToroProgramData();
 
-        ListTag userList = tag.getList("users", Tag.TAG_COMPOUND);
+        ListTag userList = tag.getList(USERS, Tag.TAG_COMPOUND);
         for (Tag userTagRaw : userList) {
             CompoundTag userTag = (CompoundTag) userTagRaw;
-            String username = userTag.getString("username");
-            CompoundTag programsTag = userTag.getCompound("programs");
+            String username = userTag.getString(USERNAME);
+            CompoundTag programsTag = userTag.getCompound(PROGRAMS);
 
             Map<String, ToroProgram> userPrograms = new HashMap<>();
             for (String key : programsTag.getAllKeys()) {

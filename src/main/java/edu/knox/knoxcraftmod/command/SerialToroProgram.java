@@ -5,7 +5,6 @@ import java.util.List;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 
 public class SerialToroProgram extends ToroProgram {
     private List<Instruction> instructions = new ArrayList<Instruction>();
@@ -22,10 +21,11 @@ public class SerialToroProgram extends ToroProgram {
 
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.putString("description", description);
+        tag.putString(TYPE, SERIAL);
+        tag.putString(DESCRIPTION, description);
 
         ListTag instructionList = toNBT(instructions);
-        tag.put("instructions", instructionList);
+        tag.put(INSTRUCTIONS, instructionList);
 
         return tag;
     }

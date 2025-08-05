@@ -3,6 +3,7 @@ package edu.knox.knoxcraftmod.entity.custom;
 import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.SerialToroProgram;
+import edu.knox.knoxcraftmod.command.ToroCommand;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -152,9 +153,9 @@ public class TorosaurusEntity extends Mob {
         }
 
         // program ran to completion; stop it
-        if (isRunning && ip >= program.size()) {
-            // TODO: remove yourself
+        if (isRunning && program != null && ip >= program.size()) {
             this.stop();
+            return;
         }
 
         if (program == null || ip >= program.size() || !isRunning) return;
@@ -162,7 +163,7 @@ public class TorosaurusEntity extends Mob {
         // fetch the next instruction
         Instruction instr = program.get(ip++);
 
-        LOGGER.debug("Running instruction #{} which is {}", ip, instr);
+        LOGGER.trace("Running instruction #{} which is {}", ip, instr);
 
         // setBlock
         if (instr.command.equals(SET_BLOCK)) {
@@ -357,12 +358,16 @@ public class TorosaurusEntity extends Mob {
     }
 
     public void stop() {
+        LOGGER.debug("stop() called, isThread {}", isThread);
         isRunning = false;
         program = null;
         ip = -1;
-        if (isThread){
+        if (this.isThread()){
+            LOGGER.debug("discarding thread "+this.getUUID());
+            // calling stop() on a thread removes it from the player's threads
+            ToroCommand.threadEnded(ownerUUID, this);
+            // GPS Sensei says it's fine to call this twice
             this.discard();
-            //TODO: tell ToroCommand this thread is done
         }
 
     }

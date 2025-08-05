@@ -20,16 +20,6 @@ public class ToroLogoutHandler {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        // Despawn all Toros that belong to this player
-        player.serverLevel().getEntities(ModEntities.TOROSAURUS.get(), 
-            toro -> toro instanceof TorosaurusEntity torosaurus &&
-                    torosaurus.getOwnerUUID().equals(player.getUUID()))
-            .forEach(t -> {
-                t.stop();
-                String username = event.getEntity().getGameProfile().getName();
-                LOGGER.info("removing Toro for "+ username+" on logout");
-                t.discard();
-            });
-        ToroCommand.removeToroMapping(player.getUUID());
+        ToroCommand.logout(player);
     }
 }

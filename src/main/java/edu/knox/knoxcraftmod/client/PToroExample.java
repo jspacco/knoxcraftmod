@@ -18,7 +18,7 @@ public class PToroExample
 
         // first thread
         toro.addThread(t -> {
-            int base = 8;
+            int base = 16;
             for (int i=0; i<base; i++) {
                 for (int j=0; j<base; j++) {
                     t.forward();
@@ -35,7 +35,7 @@ public class PToroExample
             t.forward();
             t.up();
             t.right();
-            int base = 6;
+            int base = 16;
             for (int i=0; i<base; i++) {
                 for (int j=0; j<base; j++) {
                     t.forward();

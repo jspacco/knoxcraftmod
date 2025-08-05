@@ -28,7 +28,7 @@ public class ToroCommand
 {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static Map<UUID, TorosaurusEntity> toroMap = new HashMap<>();
-    private static Map<UUID, List<TorosaurusEntity>> threadMap = new HashMap<>();
+    private static Map<UUID, Map<UUID, TorosaurusEntity>> threadMap = new HashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -102,7 +102,7 @@ public class ToroCommand
         // either the main toro is running (serial/single thread)
         // or one of the threads is running
         return toro.isRunning() || threadMap.containsKey(playerId) && 
-            threadMap.get(playerId).stream().anyMatch(t -> t.isRunning());
+            threadMap.get(playerId).values().stream().anyMatch(t -> t.isRunning());
     }
 
     private static int summonToro(CommandSourceStack source)
@@ -132,9 +132,16 @@ public class ToroCommand
             source.sendFailure(Component.literal("No Toro to stop. "));
             return 0;
         }
+        LOGGER.debug("Stopping toro "+toro.getUUID());
         toro.stop();
+        LOGGER.debug("threadMap.keySet(): "+threadMap.keySet());
         if (threadMap.containsKey(uuid)) {
-            for (TorosaurusEntity t : threadMap.get(uuid)){
+            LOGGER.debug("threadMap.get(uuid):" +threadMap.get(uuid).size());
+            // The stream().toList() trick is because I need a shallow copy, 
+            // since calling stop() will call back into this method class to remove
+            // the thread from threadMap
+            for (TorosaurusEntity t : threadMap.get(uuid).values().stream().toList()){
+                LOGGER.debug("Stopping thread "+t.getUUID());
                 t.stop();
             }
         }
@@ -184,7 +191,7 @@ public class ToroCommand
         return toroMap.containsKey(uuid);
     }
 
-    private static int runProgram(CommandSourceStack source, String name) {
+    private static int runProgram(CommandSourceStack source, String programName) {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
 
@@ -206,9 +213,9 @@ public class ToroCommand
 
         String playerName = player.getGameProfile().getName();
         LOGGER.debug("Game Profile name is "+playerName);
-        ToroProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(name);
+        ToroProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(programName);
         if (program == null) {
-            source.sendFailure(Component.literal(String.format("Program '%s' not found.", name)));
+            source.sendFailure(Component.literal(String.format("Program '%s' not found.", programName)));
             return 0;
         }
 
@@ -221,6 +228,7 @@ public class ToroCommand
             for (List<Instruction> instructions : parallel.getThreads()) {
                 TorosaurusEntity thread = spawnToroThread(player, level, toro);
                 thread.setIsThread(true);
+                addToroThread(player.getUUID(), thread);
                 // start running the list of instructions
                 thread.runProgram(instructions);
             }
@@ -231,7 +239,7 @@ public class ToroCommand
         }
 
         
-        source.sendSuccess(() -> Component.literal("Program loaded!"), false);
+        source.sendSuccess(() -> Component.literal("Program "+programName+"loaded!"), false);
         return 1;
     }
 
@@ -249,7 +257,15 @@ public class ToroCommand
     }
 
     private static void addToroThread(UUID uuid, TorosaurusEntity toro) {
-        threadMap.computeIfAbsent(uuid, id -> new ArrayList<TorosaurusEntity>());
+        threadMap.computeIfAbsent(uuid, id -> new HashMap<UUID, TorosaurusEntity>()).put(toro.getUUID(), toro);
+    }
+
+    public static void threadEnded(UUID playerId, TorosaurusEntity entity) {
+        // remove a thread from our mapping
+        LOGGER.debug("threadEnded {} {}", playerId, entity.isThread());
+        if (threadMap.containsKey(playerId)) {
+            threadMap.get(playerId).remove(entity.getUUID());
+        }
     }
 
     private static int listPrograms(CommandSourceStack source) {
@@ -265,9 +281,10 @@ public class ToroCommand
             return 0;
         }
 
+        source.sendSuccess(() -> Component.literal("Programs:"), false);
         for (String name : map.keySet()) {
             LOGGER.debug("Program name: "+name);
-            source.sendSuccess(() -> Component.literal("-> " + name), false);
+            source.sendSuccess(() -> Component.literal("-> " + name +": "+map.get(name).getDescription()), false);
         }
 
         return 1;
@@ -277,6 +294,20 @@ public class ToroCommand
         if (uuid != null){
             toroMap.remove(uuid);
             threadMap.remove(uuid);
+        }
+    }
+
+    public static void logout(ServerPlayer player) {
+        TorosaurusEntity toro = toroMap.get(player.getUUID());
+        if (toro != null) {
+            toro.discard();
+            toroMap.remove(player.getUUID());
+        }
+        if (threadMap.containsKey(player.getUUID())) {
+            threadMap.get(player.getUUID()).forEach((uuid, t) -> {
+                t.discard();
+            });
+            threadMap.remove(player.getUUID());
         }
     }
 
