@@ -32,6 +32,7 @@ public class ToroCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("toro")
+                .requires(source -> source.hasPermission(0))
                 .then(Commands.literal("summon")
                     .executes(ctx -> summonToro(ctx.getSource())))
                 .then(Commands.literal("run")
@@ -43,10 +44,15 @@ public class ToroCommand
                     .executes(ctx -> listPrograms(ctx.getSource())))
                 .then(Commands.literal("stop")
                     .executes(ctx -> stopToro(ctx.getSource())))
-
+                .then(Commands.literal("help").executes(ctx -> {
+                    ctx.getSource().sendSuccess(() ->
+                        Component.literal("Toro Commands:\n/toro summon\n/toro list\n/toro stop\n/toro help\n/toro forward|back|up|down|left|right\n/toro run <program>"), false);
+                    return 1;
+                }))
         );
         // manual movement commands
-        LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal("toro");
+        LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal("toro")
+            .requires(source -> source.hasPermission(0));
 
         for (String action : List.of("forward", "back",
              "up", "down", "left", "right", 
@@ -59,7 +65,9 @@ public class ToroCommand
 
         //TODO: restrict to ops only
         dispatcher.register(
-            Commands.literal("dumpblocks").executes(ctx -> {
+            Commands.literal("dumpblocks")
+                .requires(source -> source.hasPermission(3))
+                .executes(ctx -> {
                 try {
                     tools.BlockDumper.dumpBlockModels(ctx.getSource().getLevel());
                 } catch (Exception e) {
