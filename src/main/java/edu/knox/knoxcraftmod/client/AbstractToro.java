@@ -85,6 +85,16 @@ public abstract class AbstractToro {
         add(ToroCommand.DOWN);
     }
 
+    /**
+     * No operation. The Toro sits there for 1 tick and does nothing.
+     * 
+     * Nops allow threads to be paused should parallel programs want to line up
+     * and synchronize their threads.
+     */
+    public void nop() {
+        add(ToroCommand.NOP);
+    }
+
     protected void add(ToroCommand cmd) {
         instructions.add(new ToroInstruction(cmd));
     }

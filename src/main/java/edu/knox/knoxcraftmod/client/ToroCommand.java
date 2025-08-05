@@ -10,6 +10,7 @@ enum ToroCommand
     RIGHT("right"),
     UP("up"),
     DOWN("down"),
+    NOP("nop"),
     SET_BLOCK("setBlock"),
     ;
 

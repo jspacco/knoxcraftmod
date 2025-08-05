@@ -18,6 +18,9 @@ public class PToroExample
 
         // first thread
         toro.addThread(t -> {
+            t.nop();
+            t.nop();
+            t.nop();
             int base = 16;
             for (int i=0; i<base; i++) {
                 for (int j=0; j<base; j++) {

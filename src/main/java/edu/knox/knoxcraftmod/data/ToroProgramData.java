@@ -11,8 +11,6 @@ import com.mojang.logging.LogUtils;
 import edu.knox.knoxcraftmod.command.ToroProgram;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -47,6 +45,8 @@ public class ToroProgramData extends SavedData {
     }
     
     /*
+    Shape of the NBT data:
+    
 {"data" : 
     {
         "dev" : 
@@ -113,50 +113,6 @@ public class ToroProgramData extends SavedData {
         return data;
     }
     
-    public CompoundTag save2(CompoundTag tag) {
-        ListTag userList = new ListTag();
-
-        for (var entry : programs.entrySet()) {
-            String username = entry.getKey();
-            Map<String, ToroProgram> userPrograms = entry.getValue();
-
-            CompoundTag userTag = new CompoundTag();
-            userTag.putString(USERNAME, username);
-
-            CompoundTag programsTag = new CompoundTag();
-            for (var programEntry : userPrograms.entrySet()) {
-                programsTag.put(programEntry.getKey(), programEntry.getValue().toNBT());
-            }
-
-            userTag.put(PROGRAMS, programsTag);
-            userList.add(userTag);
-        }
-
-        tag.put(USERS, userList);
-        return tag;
-    }
-
-    private ToroProgramData load2(CompoundTag tag)
-    {
-        ToroProgramData data = new ToroProgramData();
-
-        ListTag userList = tag.getList(USERS, Tag.TAG_COMPOUND);
-        for (Tag userTagRaw : userList) {
-            CompoundTag userTag = (CompoundTag) userTagRaw;
-            String username = userTag.getString(USERNAME);
-            CompoundTag programsTag = userTag.getCompound(PROGRAMS);
-
-            Map<String, ToroProgram> userPrograms = new HashMap<>();
-            for (String key : programsTag.getAllKeys()) {
-                CompoundTag programTag = programsTag.getCompound(key);
-                userPrograms.put(key, ToroProgram.fromNBT(key, programTag));
-            }
-
-            data.programs.put(username, userPrograms);
-        }
-        return data;
-    }
-
     public static ToroProgramData load(CompoundTag tag, HolderLookup.Provider provider) {
         ToroProgramData data = new ToroProgramData();
         return data.load(tag);

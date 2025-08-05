@@ -197,7 +197,7 @@ public class TorosaurusEntity extends Mob {
 
         if (!List.of("forward", "back", "left", "right", 
             "up", "down", "turnleft", "turnright", 
-            "tl", "tr").contains(instr.command))
+            "tl", "tr", "nop").contains(instr.command))
         {
             LOGGER.warn("unknown command: "+instr.command);
             return;
@@ -212,6 +212,8 @@ public class TorosaurusEntity extends Mob {
         BlockPos current = blockPosition();
 
         BlockPos target = switch (command) {
+            // nop command is a no-op
+            case "nop" -> current;
             case "forward" -> offset(current, getToroDirection());
             case "up" -> {
                 if (current.getY() >= MAX_Y) {
