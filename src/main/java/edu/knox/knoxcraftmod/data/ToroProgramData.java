@@ -16,9 +16,6 @@ import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
 public class ToroProgramData extends SavedData {
-    private static final String PROGRAMS = "programs";
-    private static final String USERNAME = "username";
-    private static final String USERS = "users";
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final SavedData.Factory<ToroProgramData> FACTORY =
         new SavedData.Factory<>(
@@ -46,7 +43,7 @@ public class ToroProgramData extends SavedData {
     
     /*
     Shape of the NBT data:
-    
+
 {"data" : 
     {
         "dev" : 
