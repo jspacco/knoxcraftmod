@@ -98,11 +98,14 @@ public class ToroProgramData extends SavedData {
         ToroProgramData data = new ToroProgramData();
         // go through each CompoundTag in tag
         for (String username : tag.getAllKeys()) {
+            LOGGER.debug("ToroProgramData (SaveData) loading "+username);
             Map<String, ToroProgram> map = new HashMap<>();
             CompoundTag allProgramsTag = tag.getCompound(username);
             for (String programName : allProgramsTag.getAllKeys()) {
+                LOGGER.debug("loading programName "+programName);
                 CompoundTag programTag = allProgramsTag.getCompound(programName);
                 ToroProgram toroProgram = ToroProgram.fromNBT(programName, programTag);
+                LOGGER.debug("loaded program {} and it is {}", programName, toroProgram);
                 map.put(programName, toroProgram);
             }
             data.programs.put(username, map);

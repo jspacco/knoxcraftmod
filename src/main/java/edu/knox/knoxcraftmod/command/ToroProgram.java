@@ -51,11 +51,13 @@ public abstract class ToroProgram
 
     public static ToroProgram fromNBT(String programName, CompoundTag tag) {
         String type = tag.getString(TYPE);
+        LOGGER.debug("savedata loading type {}", type);
         if (!type.equals(PARALLEL) && !type.equals(SERIAL)){
             LOGGER.error("Unknown ToroProgram type: "+type);
             throw new IllegalStateException("Unknown ToroProgram type: "+type);
         }
         String description = tag.getString(DESCRIPTION);
+        LOGGER.debug("savedata loading description {}", description);
 
         if (type.equals(PARALLEL)) {
             ListTag outerList = tag.getList(THREADS, Tag.TAG_LIST);
@@ -63,6 +65,7 @@ public abstract class ToroProgram
             for (int i = 0; i < outerList.size(); i++) {
                 ListTag innerList = (ListTag) outerList.get(i);
                 List<Instruction> thread = readFromTag(innerList);
+                LOGGER.debug("savedata read {} instructions", thread.size());
                 instructions.add(thread);
             }
             return new ParallelToroProgram(programName, description, instructions);
@@ -74,8 +77,9 @@ public abstract class ToroProgram
     }
     
     private static List<Instruction> readFromTag(ListTag instructionList) {
-         List<Instruction> instructions = new ArrayList<>();
+        List<Instruction> instructions = new ArrayList<>();
         for (Tag t : instructionList) {
+            LOGGER.debug("instruction tag type {}, instanceof CompoundTag {} and tostring {}", t.getType(), t instanceof CompoundTag, t.toString());
             if (t instanceof CompoundTag instrTag) {
                 instructions.add(Instruction.fromNBT(instrTag));
             }
