@@ -20,7 +20,7 @@ public class ParallelToroProgram extends ToroProgram {
         return this.threads;
     }
 
-    public Tag toNBT() {
+    public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString(TYPE, PARALLEL);
         tag.putString(DESCRIPTION, description);

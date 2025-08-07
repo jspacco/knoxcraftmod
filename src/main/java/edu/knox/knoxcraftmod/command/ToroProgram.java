@@ -47,7 +47,7 @@ public abstract class ToroProgram
         return instructionList;
     }
 
-    public abstract Tag toNBT();
+    public abstract CompoundTag toNBT();
 
     public static ToroProgram fromNBT(String programName, CompoundTag tag) {
         String type = tag.getString(TYPE);
@@ -65,13 +65,15 @@ public abstract class ToroProgram
             for (int i = 0; i < outerList.size(); i++) {
                 ListTag innerList = (ListTag) outerList.get(i);
                 List<Instruction> thread = readFromTag(innerList);
-                LOGGER.debug("savedata read {} instructions", thread.size());
+                LOGGER.debug("parallel savedata read {} instructions", thread.size());
                 instructions.add(thread);
             }
             return new ParallelToroProgram(programName, description, instructions);
         } else {
             ListTag instructionList = tag.getList(INSTRUCTIONS, Tag.TAG_COMPOUND);
+            LOGGER.trace("instructionList tag {} {} {}", instructionList.getAsString(), instructionList.toString(), instructionList.size());
             List<Instruction> instructions = readFromTag(instructionList);
+            LOGGER.debug("serial program just read {} instructions", instructions.size());
             return new SerialToroProgram(programName, description, instructions);
         }
     }
@@ -81,7 +83,9 @@ public abstract class ToroProgram
         for (Tag t : instructionList) {
             LOGGER.debug("instruction tag type {}, instanceof CompoundTag {} and tostring {}", t.getType(), t instanceof CompoundTag, t.toString());
             if (t instanceof CompoundTag instrTag) {
-                instructions.add(Instruction.fromNBT(instrTag));
+                Instruction instr = Instruction.fromNBT(instrTag);
+                LOGGER.trace("reading instr from savedata {}", instr);
+                instructions.add(instr);
             }
         }
         return instructions;

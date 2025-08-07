@@ -15,7 +15,7 @@ public class Mauritius {
 
         Toro toro = new Toro(programName, description);
 
-        int length = 4;
+        int length = 12;
         int width = 4;
         for (int i=0; i<width*4; i++) {
             for (int j=0; j<length; j++) {
