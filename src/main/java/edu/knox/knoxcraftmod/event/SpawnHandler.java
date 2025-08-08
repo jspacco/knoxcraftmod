@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
-import edu.knox.knoxcraftmod.entity.TerpTurtle;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;

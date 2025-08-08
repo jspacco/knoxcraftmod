@@ -9,7 +9,6 @@ import com.mojang.logging.LogUtils;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 
 public class SerialTerpProgram extends TerpProgram {
     private static final Logger LOGGER = LogUtils.getLogger();

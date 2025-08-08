@@ -4,7 +4,6 @@ import java.util.List;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 
 public class ParallelTerpProgram extends TerpProgram {
     private List<List<Instruction>> threads;
