@@ -4,6 +4,7 @@ plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 version = mod_version
@@ -226,6 +227,52 @@ sourceSets.each {
 }
 
 def studentProjectDir = file("$buildDir/knoxcraft")
+
+configurations {
+    shadeOnly
+}
+
+dependencies {
+    shadeOnly("org.tomlj:tomlj:1.1.0")
+    implementation("org.tomlj:tomlj:1.1.0")
+}
+
+//
+// Shadow the tomlj libraries into my jarfile
+//
+shadowJar {
+    archiveClassifier.set('')
+    configurations = [project.configurations.shadeOnly]
+
+    dependencies {
+        // Full exclusion list from previous response
+        exclude(dependency("com.mojang:brigadier"))
+        exclude(dependency("com.mojang:authlib"))
+        exclude(dependency("com.mojang:logging"))
+        exclude(dependency("com.google.code.gson:gson"))
+        exclude(dependency("net.sf.jopt-simple:jopt-simple"))
+        exclude(dependency("net.java.dev.jna:jna"))
+        exclude(dependency("net.java.dev.jna:jna-platform"))
+        exclude(dependency("org.lz4:lz4-java"))
+        exclude(dependency("org.ow2.asm:asm"))
+        exclude(dependency("org.ow2.asm:asm-commons"))
+        exclude(dependency("org.ow2.asm:asm-util"))
+        exclude(dependency("org.ow2.asm:asm-tree"))
+        exclude(dependency("org.ow2.asm:asm-analysis"))
+        exclude(dependency("org.slf4j:slf4j-api"))
+        exclude(dependency("org.slf4j:slf4j-simple"))
+        exclude(dependency("org.slf4j:slf4j-log4j12"))
+        exclude(dependency("net.minecraftforge:bootstrap"))
+    }
+}
+
+
+jar {
+    enabled = false
+}
+
+build.dependsOn shadowJar
+
 
 // Define a custom Jar task for the student lib jar
 task clientJar(type: Jar) {
