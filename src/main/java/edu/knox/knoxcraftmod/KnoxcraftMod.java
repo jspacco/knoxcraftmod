@@ -2,12 +2,9 @@ package edu.knox.knoxcraftmod;
 
 import com.mojang.logging.LogUtils;
 
-import edu.knox.knoxcraftmod.command.ToroCommand;
-import edu.knox.knoxcraftmod.entity.ModEntities;
-import edu.knox.knoxcraftmod.entity.client.TorosaurusRenderer;
+import edu.knox.knoxcraftmod.command.TerpCommand;
 import edu.knox.knoxcraftmod.http.HttpServerManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -48,9 +45,6 @@ public class KnoxcraftMod
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
-        // Register the ModEntities class to the mod event bus so entities can be registered
-        ModEntities.register(modEventBus);
-
         // register KnoxcraftMod specific config information
         // putting into COMMON rather than SERVERCONFIG so that
         // it's in one easy to find place (config) and not 
@@ -87,6 +81,7 @@ public class KnoxcraftMod
                     "generate-structures=false",
                     "gamemode=survival",
                     "spawn-monsters=false",
+                    "spawn-animals=false",
                     "motd=Knoxcraft Superflat Server"
                 );
                 Files.write(propsPath, defaultProps);
@@ -112,15 +107,13 @@ public class KnoxcraftMod
             // Some client setup code
             LOGGER.info("HELLO FROM CLIENT SETUP");
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-
-            EntityRenderers.register(ModEntities.TOROSAURUS.get(), TorosaurusRenderer::new);
         }
     }
 
     // regsiter for slash commands
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        ToroCommand.register(event.getDispatcher());
+        TerpCommand.register(event.getDispatcher());
     }
 
 }

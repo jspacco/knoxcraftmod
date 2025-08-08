@@ -25,7 +25,7 @@ import com.google.gson.JsonSerializer;
  * that are serialized into JSON and uploaded. The server
  * never runs the student code.
  */
-public class ToroUploader
+public class TerpUploader
 {
     private static final Gson GSON;
     static {
@@ -36,15 +36,15 @@ public class ToroUploader
         // TURN_LEFT becomes turnleft
         // SUGAR_CANE becomes minecraft:sugar_cane
         GsonBuilder gsonBuilder = new GsonBuilder();
-        gsonBuilder.registerTypeAdapter(ToroCommand.class, new JsonSerializer<ToroCommand>() {
+        gsonBuilder.registerTypeAdapter(TerpCommand.class, new JsonSerializer<TerpCommand>() {
             @Override
-            public JsonElement serialize(ToroCommand src, Type typeOfSrc, JsonSerializationContext context) {
+            public JsonElement serialize(TerpCommand src, Type typeOfSrc, JsonSerializationContext context) {
                return new JsonPrimitive(src.getId());
             }
         });
-        gsonBuilder.registerTypeAdapter(ToroBlockType.class, new JsonSerializer<ToroBlockType>() {
+        gsonBuilder.registerTypeAdapter(TerpBlockType.class, new JsonSerializer<TerpBlockType>() {
             @Override
-            public JsonElement serialize(ToroBlockType src, Type typeOfSrc, JsonSerializationContext context) {
+            public JsonElement serialize(TerpBlockType src, Type typeOfSrc, JsonSerializationContext context) {
                 return new JsonPrimitive(src.getId());
             }
         });
@@ -52,7 +52,7 @@ public class ToroUploader
     }
 
     public static void upload(String serverUrl, 
-        Toro toro,
+        Terp toro,
         String minecraftPlayername,
         String username, String password)
     {
@@ -69,7 +69,7 @@ public class ToroUploader
     }
 
     public static void upload(String serverUrl, 
-        ParallelToro toro,
+        ParallelTerp toro,
         String minecraftPlayername,
         String username, String password)
     {

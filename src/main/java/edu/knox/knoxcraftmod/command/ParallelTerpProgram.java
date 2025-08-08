@@ -6,12 +6,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
-public class ParallelToroProgram extends ToroProgram {
+public class ParallelTerpProgram extends TerpProgram {
     private List<List<Instruction>> threads;
 
-    public ParallelToroProgram() {}
+    public ParallelTerpProgram() {}
 
-    public ParallelToroProgram(String programName, String description, List<List<Instruction>> instructions) {
+    public ParallelTerpProgram(String programName, String description, List<List<Instruction>> instructions) {
         super(programName, description);
         this.threads = instructions;
     }

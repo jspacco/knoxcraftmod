@@ -15,10 +15,10 @@ import com.google.gson.Gson;
 import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.KnoxcraftConfig;
-import edu.knox.knoxcraftmod.command.ParallelToroProgram;
-import edu.knox.knoxcraftmod.command.SerialToroProgram;
-import edu.knox.knoxcraftmod.command.ToroProgram;
-import edu.knox.knoxcraftmod.data.ToroProgramData;
+import edu.knox.knoxcraftmod.command.ParallelTerpProgram;
+import edu.knox.knoxcraftmod.command.SerialTerpProgram;
+import edu.knox.knoxcraftmod.command.TerpProgram;
+import edu.knox.knoxcraftmod.data.TerpProgramData;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -93,21 +93,21 @@ public class HttpServerManager {
 
             // Store the program
             ServerLevel level = server.getLevel(ServerLevel.OVERWORLD);
-            ToroProgramData data = ToroProgramData.get(level);
+            TerpProgramData data = TerpProgramData.get(level);
 
             if (!type.equals("serial") && !type.equals("parallel")) {
                 LOGGER.error("Unknown type "+type);
             }
-            ToroProgram program = null;
+            TerpProgram program = null;
             if (type.equals("serial")) {
                 program = GSON.fromJson(
-                    new InputStreamReader(exchange.getRequestBody()), SerialToroProgram.class);
-                LOGGER.trace("Serial Program: {}", program);
+                    new InputStreamReader(exchange.getRequestBody()), SerialTerpProgram.class);
+                LOGGER.trace("Serial Program uploaded: {}", program);
                 // add the program with the username
             } else if (type.equals("parallel")) {
                 program = GSON.fromJson(
-                    new InputStreamReader(exchange.getRequestBody()), ParallelToroProgram.class);
-                    LOGGER.trace("Parallel Program: {}", program);
+                    new InputStreamReader(exchange.getRequestBody()), ParallelTerpProgram.class);
+                    LOGGER.trace("Parallel Program uploaded: {}", program);
                 
             }
             data.addProgram(minecraftPlayername, program);

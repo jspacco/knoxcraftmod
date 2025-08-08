@@ -1,10 +1,15 @@
-package edu.knox.knoxcraftmod.entity.custom;
+package edu.knox.knoxcraftmod.entity;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
-import edu.knox.knoxcraftmod.command.SerialToroProgram;
-import edu.knox.knoxcraftmod.command.ToroCommand;
-import edu.knox.knoxcraftmod.command.ToroProgram;
+import edu.knox.knoxcraftmod.command.TerpCommand;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -15,30 +20,38 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.animal.Turtle;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
-import java.util.UUID;
+public class TerpTurtle extends Turtle {
 
-import org.slf4j.Logger;
+    public TerpTurtle(EntityType<? extends Turtle> pEntityType, Level pLevel) {
+        super(pEntityType, pLevel);
+        this.MAX_Y = pLevel.getMaxBuildHeight();
+        // toros can fly
+        this.setNoGravity(true);
+        this.setInvulnerable(true);
+        this.lookControl = new LookControl(this) {
+            @Override
+            public void tick() {
+                // Do nothing — prevents automatic head turning
+            }
+        };
+    }
 
-import com.mojang.logging.LogUtils;
-
-public class TorosaurusEntity extends Mob {
     private static final int SUPERFLAT_GROUND_LEVEL = -60;
     private final int MAX_Y;
     private static final String SET_BLOCK = "setBlock";
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    
-    public final AnimationState idleAnimationState = new AnimationState();
-    private int idleAnimationTimeout = 0;
     
     private UUID ownerUUID;
     
@@ -52,75 +65,42 @@ public class TorosaurusEntity extends Mob {
     // The direction (NORTH, SOUTH, EAST, WEST) is encoded as an int
     // that is always stored on the server. We always get the int from
     // the server and never update it on the client side.
-    private static final EntityDataAccessor<Integer> DIRECTION =
-        SynchedEntityData.defineId(TorosaurusEntity.class, EntityDataSerializers.INT);
+    private Direction direction = Direction.SOUTH;
+    
 
-
-
-    public TorosaurusEntity(EntityType<? extends Mob> type, Level level) {
-        super(type, level);
-            this.MAX_Y = level.getMaxBuildHeight();
-        // toros can fly
-        this.setNoGravity(true);
-        this.setInvulnerable(true);
-        this.lookControl = new LookControl(this) {
-            @Override
-            public void tick() {
-                // Do nothing — prevents automatic head turning
-            }
-        };
-
-    }
     @Override
     protected void updateControlFlags() {
         // Prevent setting flags like FLAG_MOVING that trigger head/body turns
     }
 
-    @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        super.defineSynchedData(builder);
-        // default to south (Minecraft defaults to south)
-        builder.define(DIRECTION, Direction.SOUTH.ordinal());
-    }
-
-    public void setToroDirection(Direction direction) {
-        int ordinal = direction.ordinal();
-        if (entityData.get(DIRECTION) != ordinal) {
-            entityData.set(DIRECTION, ordinal);
+    public void setTerpDirection(Direction newDirection) {
+        if (this.direction != newDirection) {
+            this.direction = newDirection;
+            float yaw = yawFromDirection(newDirection);
+            this.setYRot(yaw);
+            this.setYHeadRot(yaw);
+            this.setYBodyRot(yaw);
         }
     }
 
+    private float yawFromDirection(Direction dir) {
+        return switch (dir) {
+            case NORTH -> 180f;
+            case EAST -> -90f;
+            case SOUTH -> 0f;
+            case WEST -> 90f;
+            default -> 0f;
+        };
+    }
 
     public Direction getToroDirection() {
-        return Direction.fromOrdinal(this.entityData.get(DIRECTION));
-    }
-
-    @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
-        super.onSyncedDataUpdated(key);
-
-        if (key.equals(DIRECTION)) {
-            LOGGER.debug("HEYHEY Toro direction updated on client: {}", getToroDirection());
-            float yaw = getToroDirection().toYaw();
-            setYRot(yaw);
-            setYHeadRot(yaw);
-            setYBodyRot(yaw);
-        }
+        return direction;
     }
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
         // invulnerable turtle
         return false; 
-    }
-
-    private void setupAnimationStates() {
-        if (this.idleAnimationTimeout <= 0) {
-            this.idleAnimationTimeout = 40;
-            this.idleAnimationState.start(this.tickCount);
-        } else {
-            --this.idleAnimationTimeout;
-        }
     }
 
     public void runProgram(List<Instruction> instructions)
@@ -135,13 +115,23 @@ public class TorosaurusEntity extends Mob {
     public void tick() {
         super.tick();
 
-        if (this.level().isClientSide()){
-            this.setupAnimationStates();
-            return;
+        this.setGlowingTag(true);
+        if (this.level().isClientSide && this.tickCount % 20 == 0) {
+            LOGGER.debug("Turtle (client) tick at " + this.getX() + " " + this.getY() + " " + this.getZ());
         }
+        if (this.level().isClientSide && this.tickCount % 40 == 0) {
+            LOGGER.debug("Entity class: " + this.getClass().getName());
+        }
+
+
+        // if (this.level().isClientSide()){
+        //     this.setupAnimationStates();
+        //     return;
+        // }
 
         if (!level().isClientSide) {
             // Server sets Y rotation
+            //TODO: find some other way to store the Y rotation
             setYRot(getToroDirection().toYaw());
             setYHeadRot(getYRot());
             setYBodyRot(getYRot());
@@ -241,10 +231,10 @@ public class TorosaurusEntity extends Mob {
             }
             
             case "turnleft", "tl" -> {
-                setToroDirection(getToroDirection().turnLeft());
+                setTerpDirection(getToroDirection().turnLeft());
             }
             case "turnright", "tr" -> {
-                setToroDirection(getToroDirection().turnRight());
+                setTerpDirection(getToroDirection().turnRight());
             }
         }
     }
@@ -264,6 +254,7 @@ public class TorosaurusEntity extends Mob {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        // I can make this mob faster here
         return Mob.createMobAttributes().add(Attributes.MOVEMENT_SPEED, 0.5);
     }
 
@@ -292,6 +283,12 @@ public class TorosaurusEntity extends Mob {
             ownerUUID = tag.getUUID("owner");
         }
     }
+
+    @Override
+    public boolean isInvisible() {
+        return false;
+    }
+
 
     // change visibility
     @Override
@@ -367,11 +364,10 @@ public class TorosaurusEntity extends Mob {
         if (this.isThread()){
             LOGGER.debug("discarding thread "+this.getUUID());
             // calling stop() on a thread removes it from the player's threads
-            ToroCommand.threadEnded(ownerUUID, this);
+            TerpCommand.threadEnded(ownerUUID, this);
             // GPS Sensei says it's fine to call this twice
             this.discard();
         }
-
     }
 
     public boolean isThread() {
@@ -381,5 +377,4 @@ public class TorosaurusEntity extends Mob {
     public void setIsThread(boolean isThread) {
         this.isThread = isThread;
     }
-
 }

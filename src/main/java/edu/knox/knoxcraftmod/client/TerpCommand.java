@@ -1,6 +1,6 @@
 package edu.knox.knoxcraftmod.client;
 
-enum ToroCommand 
+enum TerpCommand 
 {
     FORWARD("forward"),
     BACK("back"),
@@ -16,7 +16,7 @@ enum ToroCommand
 
     private final String id;
 
-    ToroCommand(String id) {
+    TerpCommand(String id) {
         this.id = id;
     }
 

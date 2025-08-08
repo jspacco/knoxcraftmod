@@ -19,28 +19,28 @@ public class PyramidExample {
         String programName = "pyramid";
         String description = "Draw a pyramid.";
 
-        Toro toro = new Toro(programName, description);
+        Terp terp = new Terp(programName, description);
         
         for (int base=8; base>=0; base-=2){
             for (int i=0; i<base; i++) {
                 for (int j=0; j<base; j++) {
-                    toro.forward();
-                    toro.setBlock(ToroBlockType.OBSIDIAN);
+                    terp.forward();
+                    terp.setBlock(TerpBlockType.OBSIDIAN);
                 }
                 for (int j=0; j<base; j++) {
-                    toro.back();
+                    terp.back();
                 }
-                toro.right();
+                terp.right();
             }
             for (int i=0; i<base; i++) {
-                toro.left();
+                terp.left();
             }
-            toro.forward();
-            toro.right();
-            toro.up();
+            terp.forward();
+            terp.right();
+            terp.up();
         }
 
-        ToroUploader.upload(serverUrl, toro, minecraftPlayername, username, password);
+        TerpUploader.upload(serverUrl, terp, minecraftPlayername, username, password);
     }
     
 }

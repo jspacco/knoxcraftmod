@@ -1,18 +1,18 @@
 package edu.knox.knoxcraftmod.client;
 
-class ToroInstruction 
+class TerpInstruction 
     {
         @SuppressWarnings("unused")
-        private final ToroCommand command;
+        private final TerpCommand command;
         @SuppressWarnings("unused")
-        private final ToroBlockType blockType;
+        private final TerpBlockType blockType;
 
-        ToroInstruction(ToroCommand command, ToroBlockType toroBlockType) {
+        TerpInstruction(TerpCommand command, TerpBlockType toroBlockType) {
             this.command = command;
             this.blockType = toroBlockType;
         }
 
-        ToroInstruction(ToroCommand command) {
+        TerpInstruction(TerpCommand command) {
             this(command, null);
         }
     }

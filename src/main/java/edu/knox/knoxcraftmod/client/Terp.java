@@ -2,20 +2,20 @@ package edu.knox.knoxcraftmod.client;
 
 import java.util.LinkedList;
 
-public class Toro extends AbstractToro
+public class Terp extends AbstractTerp
 {
     private final String programName;
     private final String description;
 
     /**
-     * Create a Toro with the given name and description.
+     * Create a Terp with the given name and description.
      * 
      * @param programName
      * @param description
      */
-    public Toro(String programName, String description)
+    public Terp(String programName, String description)
     {
-        super(new LinkedList<ToroInstruction>());
+        super(new LinkedList<TerpInstruction>());
         if (programName == null || description == null) {
             throw new IllegalArgumentException("programName and description cannot be null!");
         }

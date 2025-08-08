@@ -18,23 +18,23 @@ import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import edu.knox.knoxcraftmod.entity.ModEntities;
-import edu.knox.knoxcraftmod.entity.custom.TorosaurusEntity;
-import edu.knox.knoxcraftmod.data.ToroProgramData;
+import net.minecraft.world.entity.EntityType;
+import edu.knox.knoxcraftmod.entity.TerpTurtle;
+import edu.knox.knoxcraftmod.data.TerpProgramData;
 import net.minecraft.network.chat.Component;
 
-public class ToroCommand 
+public class TerpCommand 
 {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static Map<UUID, TorosaurusEntity> toroMap = new HashMap<>();
-    private static Map<UUID, Map<UUID, TorosaurusEntity>> threadMap = new HashMap<>();
+    private static Map<UUID, TerpTurtle> terpMap = new HashMap<>();
+    private static Map<UUID, Map<UUID, TerpTurtle>> threadMap = new HashMap<>();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-            Commands.literal("toro")
+            Commands.literal("terp")
                 .requires(source -> source.hasPermission(0))
                 .then(Commands.literal("summon")
-                    .executes(ctx -> summonToro(ctx.getSource())))
+                    .executes(ctx -> summonTerp(ctx.getSource())))
                 .then(Commands.literal("run")
                     .then(Commands.argument("program", StringArgumentType.string())
                         .executes(ctx -> runProgram(
@@ -46,12 +46,12 @@ public class ToroCommand
                     .executes(ctx -> stopToro(ctx.getSource())))
                 .then(Commands.literal("help").executes(ctx -> {
                     ctx.getSource().sendSuccess(() ->
-                        Component.literal("Toro Commands:\n/toro summon\n/toro list\n/toro stop\n/toro help\n/toro forward|back|up|down|left|right\n/toro run <program>"), false);
+                        Component.literal("Terp Commands:\n/toro summon\n/toro list\n/toro stop\n/toro help\n/toro forward|back|up|down|left|right\n/toro run <program>"), false);
                     return 1;
                 }))
         );
         // manual movement commands
-        LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal("toro")
+        LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal("terp")
             .requires(source -> source.hasPermission(0));
 
         for (String action : List.of("forward", "back",
@@ -84,7 +84,7 @@ public class ToroCommand
     private static int manualMove(CommandContext<CommandSourceStack> ctx, String action) {
         ServerPlayer player = ctx.getSource().getPlayer();
 
-        TorosaurusEntity toro = getMainToro(player.getUUID());
+        TerpTurtle toro = getMainTerp(player.getUUID());
         if (toro == null) {
             // Toro must already exist for a manual move
             ctx.getSource().sendFailure(Component.literal("Toro not found."));
@@ -104,15 +104,15 @@ public class ToroCommand
     }
 
     private static boolean isRunning(UUID playerId) {
-        if (!hasMainToro(playerId)) return false;
-        TorosaurusEntity toro = getMainToro(playerId);
+        if (!hasMainTerp(playerId)) return false;
+        TerpTurtle toro = getMainTerp(playerId);
         // either the main toro is running (serial/single thread)
         // or one of the threads is running
         return toro.isRunning() || threadMap.containsKey(playerId) && 
             threadMap.get(playerId).values().stream().anyMatch(t -> t.isRunning());
     }
 
-    private static int summonToro(CommandSourceStack source)
+    private static int summonTerp(CommandSourceStack source)
     {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
@@ -120,12 +120,12 @@ public class ToroCommand
             source.sendFailure(Component.literal("Cannot summon Toro above max build height. "));
             return 0;
         }
-        TorosaurusEntity toro = getOrCreateToro(player, level);
+        TerpTurtle terp = getOrCreateTerp(player, level);
         if (isRunning(player.getUUID())) {
             source.sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro. "));
             return 0;
         }
-        moveToroToEntity(toro, player);
+        moveTerpToEntity(terp, player);
         source.sendSuccess(() -> Component.literal("Toro summoned."), false);
         return 1;
     }
@@ -134,7 +134,7 @@ public class ToroCommand
     {
         ServerPlayer player = source.getPlayer();
         UUID uuid = player.getUUID();
-        TorosaurusEntity toro = getMainToro(uuid);
+        TerpTurtle toro = getMainTerp(uuid);
         if (toro == null) {
             source.sendFailure(Component.literal("No Toro to stop. "));
             return 0;
@@ -147,7 +147,7 @@ public class ToroCommand
             // The stream().toList() trick is because I need a shallow copy, 
             // since calling stop() will call back into this method class to remove
             // the thread from threadMap
-            for (TorosaurusEntity t : threadMap.get(uuid).values().stream().toList()){
+            for (TerpTurtle t : threadMap.get(uuid).values().stream().toList()){
                 LOGGER.debug("Stopping thread "+t.getUUID());
                 t.stop();
             }
@@ -156,86 +156,90 @@ public class ToroCommand
         return 1;
     }
 
-    private static TorosaurusEntity getOrCreateToro(ServerPlayer player, ServerLevel level)
+    private static TerpTurtle getOrCreateTerp(ServerPlayer player, ServerLevel level)
     {
         // get the player's toro, if one exists
-        TorosaurusEntity toro = getMainToro(player.getUUID());
-        if (toro != null) return toro;
+        TerpTurtle terp = getMainTerp(player.getUUID());
+        if (terp != null) return terp;
 
-        // can't find the toro, so make a new one
-        toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
-        LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
-        setToro(player.getUUID(), toro);
-        toro.setOwnerUUID(player.getUUID());
+        // can't find the terp, so make a new one
+        terp = new TerpTurtle(EntityType.TURTLE, level);
+        LOGGER.info("Spawning Terp entity: {}", terp.getType().toString());
+        LOGGER.debug("Spawning new Terp with uuid {}", terp.getUUID());
+        setToro(player.getUUID(), terp);
+        terp.setOwnerUUID(player.getUUID());
         // It feels like I should call moveToroToPlayer(toro, player) here, 
         // but I know it will get called anytime I summon a toro, so I would be doing
         // that twice. But it still feels like I should set the location here.
 
-        // add Toro to the level
-        level.addFreshEntity(toro);
-        LOGGER.debug("Toro fresh entity added");
+        // add Terp to the level, be sure to add on the server
+        if (!level.isClientSide()) {
+            level.addFreshEntity(terp);
+            LOGGER.debug("Terp fresh entity added");
+        }
         
-        return toro;
+        
+        return terp;
     }
 
-    private static void moveToroToEntity(TorosaurusEntity toro, Entity entity)
+    private static void moveTerpToEntity(TerpTurtle toro, Entity entity)
     {
         // moves the toro to the entity's location, matches the entities heading as well
         toro.setPos(entity.getX(), entity.getY(), entity.getZ());
         Direction dir = Direction.fromDegrees(entity.getYRot());
-        toro.setToroDirection(dir);
+        toro.setTerpDirection(dir);
     }
 
-    private static void setToro(UUID uuid, TorosaurusEntity toro) {
-        toroMap.put(uuid, toro);
+    private static void setToro(UUID uuid, TerpTurtle toro) {
+        terpMap.put(uuid, toro);
     }
 
-    private static TorosaurusEntity getMainToro(UUID uuid) {
-        return toroMap.get(uuid);
+    private static TerpTurtle getMainTerp(UUID uuid) {
+        return terpMap.get(uuid);
     }
 
-    private static boolean hasMainToro(UUID uuid) {
-        return toroMap.containsKey(uuid);
+    private static boolean hasMainTerp(UUID uuid) {
+        return terpMap.containsKey(uuid);
     }
 
     private static int runProgram(CommandSourceStack source, String programName) {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
 
-        TorosaurusEntity toro = getMainToro(player.getUUID());
+        TerpTurtle terp = getMainTerp(player.getUUID());
         
-        if (toro == null) {
-            source.sendFailure(Component.literal("First summon your Toro with '/toro summon'"));
+        if (terp == null) {
+            source.sendFailure(Component.literal("First summon your Terp with '/terp summon'"));
             return 0;
         }
 
         if (isRunning(player.getUUID())) {
-            source.sendFailure(Component.literal("Toro is busy! Wait or stop '/toro stop' "));
+            source.sendFailure(Component.literal("Terp is busy! Wait or stop '/terp stop' "));
             return 0;
         }
 
         // this should always return something,
         // becuase if it's not there it makes a new one
-        ToroProgramData data = ToroProgramData.get(level);
+        TerpProgramData data = TerpProgramData.get(level);
 
         String playerName = player.getGameProfile().getName();
         LOGGER.debug("Game Profile name is "+playerName);
-        ToroProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(programName);
+        TerpProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(programName);
         if (program == null) {
             source.sendFailure(Component.literal(String.format("Program '%s' not found.", programName)));
             return 0;
         }
 
-        if (program instanceof SerialToroProgram serial) {
+        if (program instanceof SerialTerpProgram serial) {
             // serial (single thread) program
-            toro.runProgram(serial.getInstructions());
-        } else if (program instanceof ParallelToroProgram parallel){
+            terp.runProgram(serial.getInstructions());
+        } else if (program instanceof ParallelTerpProgram parallel){
             // Parallel
             // create and run toro thread for each set of instructions
             for (List<Instruction> instructions : parallel.getThreads()) {
-                TorosaurusEntity thread = spawnToroThread(player, level, toro);
+                TerpTurtle thread = spawnTerpThread(player, level, terp);
                 thread.setIsThread(true);
-                addToroThread(player.getUUID(), thread);
+                addTerpThread(player.getUUID(), thread);
                 // start running the list of instructions
                 thread.runProgram(instructions);
             }
@@ -250,24 +254,24 @@ public class ToroCommand
         return 1;
     }
 
-    private static TorosaurusEntity spawnToroThread(ServerPlayer player, ServerLevel level, Entity entity) {
-        TorosaurusEntity toro = new TorosaurusEntity(ModEntities.TOROSAURUS.get(), level);
-        LOGGER.debug("Spawning new Toro with uuid {}", toro.getUUID());
+    private static TerpTurtle spawnTerpThread(ServerPlayer player, ServerLevel level, Entity entity) {
+        TerpTurtle terp = new TerpTurtle(EntityType.TURTLE, level);
+        LOGGER.debug("Spawning new Toro with uuid {}", terp.getUUID());
         // add toro thread to our map
-        addToroThread(player.getUUID(), toro);
+        addTerpThread(player.getUUID(), terp);
         // set owner to player
-        toro.setOwnerUUID(player.getUUID());
+        terp.setOwnerUUID(player.getUUID());
         // move to match the location of the entity (which is the original toro)
-        moveToroToEntity(toro, entity);
-        level.addFreshEntity(toro);
-        return toro;
+        moveTerpToEntity(terp, entity);
+        level.addFreshEntity(terp);
+        return terp;
     }
 
-    private static void addToroThread(UUID uuid, TorosaurusEntity toro) {
-        threadMap.computeIfAbsent(uuid, id -> new HashMap<UUID, TorosaurusEntity>()).put(toro.getUUID(), toro);
+    private static void addTerpThread(UUID uuid, TerpTurtle terp) {
+        threadMap.computeIfAbsent(uuid, id -> new HashMap<UUID, TerpTurtle>()).put(terp.getUUID(), terp);
     }
 
-    public static void threadEnded(UUID playerId, TorosaurusEntity entity) {
+    public static void threadEnded(UUID playerId, TerpTurtle entity) {
         // remove a thread from our mapping
         LOGGER.debug("threadEnded {} {}", playerId, entity.isThread());
         if (threadMap.containsKey(playerId)) {
@@ -278,7 +282,7 @@ public class ToroCommand
     private static int listPrograms(CommandSourceStack source) {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = player.serverLevel();
-        ToroProgramData data = ToroProgramData.get(level);
+        TerpProgramData data = TerpProgramData.get(level);
 
         String playerName = player.getGameProfile().getName();
         LOGGER.debug("Game Profile playerName is "+playerName);
@@ -299,16 +303,16 @@ public class ToroCommand
 
     public static void removeToroMapping(UUID uuid) {
         if (uuid != null){
-            toroMap.remove(uuid);
+            terpMap.remove(uuid);
             threadMap.remove(uuid);
         }
     }
 
     public static void logout(ServerPlayer player) {
-        TorosaurusEntity toro = toroMap.get(player.getUUID());
-        if (toro != null) {
-            toro.discard();
-            toroMap.remove(player.getUUID());
+        TerpTurtle terp = terpMap.get(player.getUUID());
+        if (terp != null) {
+            terp.discard();
+            terpMap.remove(player.getUUID());
         }
         if (threadMap.containsKey(player.getUUID())) {
             threadMap.get(player.getUUID()).forEach((uuid, t) -> {

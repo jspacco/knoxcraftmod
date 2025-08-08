@@ -11,14 +11,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
-public class SerialToroProgram extends ToroProgram {
+public class SerialTerpProgram extends TerpProgram {
     private static final Logger LOGGER = LogUtils.getLogger();
     
     private List<Instruction> instructions = new ArrayList<Instruction>();
 
-    public SerialToroProgram() {}
+    public SerialTerpProgram() {}
 
-    public SerialToroProgram(String programName, String description, List<Instruction> instructions) {
+    public SerialTerpProgram(String programName, String description, List<Instruction> instructions) {
         super(programName, description);
         this.instructions = instructions;
     }

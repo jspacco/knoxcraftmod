@@ -7,12 +7,12 @@ import java.util.function.Consumer;
 
 import edu.knox.knoxcraftmod.client.*;
 
-public class ParallelToro {
+public class ParallelTerp {
 
     private String programName;
     private String description;
 
-    public ParallelToro(String programName, String description) {
+    public ParallelTerp(String programName, String description) {
         if (programName == null || description == null) {
             throw new IllegalArgumentException("programName and description cannot be null!");
         }
@@ -21,17 +21,17 @@ public class ParallelToro {
     }
 
     // each element of the list is the instructions for a thread
-    private List<AbstractToro> threads = new LinkedList<>();
+    private List<AbstractTerp> threads = new LinkedList<>();
 
-    public void addThread(Consumer<AbstractToro> c) {
-        AbstractToro t = new AbstractToro(new ArrayList<>()) {};
+    public void addThread(Consumer<AbstractTerp> c) {
+        AbstractTerp t = new AbstractTerp(new ArrayList<>()) {};
         threads.add(t);
         c.accept(t);
     }
 
-    public List<List<ToroInstruction>> getAllThreads() {
+    public List<List<TerpInstruction>> getAllThreads() {
         return threads.stream()
-            .map(AbstractToro::getInstructions)
+            .map(AbstractTerp::getInstructions)
             .toList();
     }
 

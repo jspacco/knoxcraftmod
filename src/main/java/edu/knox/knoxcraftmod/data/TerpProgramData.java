@@ -8,31 +8,31 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
-import edu.knox.knoxcraftmod.command.ToroProgram;
+import edu.knox.knoxcraftmod.command.TerpProgram;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
-public class ToroProgramData extends SavedData {
+public class TerpProgramData extends SavedData {
     private static final Logger LOGGER = LogUtils.getLogger();
-    public static final SavedData.Factory<ToroProgramData> FACTORY =
+    public static final SavedData.Factory<TerpProgramData> FACTORY =
         new SavedData.Factory<>(
-            ToroProgramData::new,       // constructor
-            ToroProgramData::load,      // deserializer
+            TerpProgramData::new,       // constructor
+            TerpProgramData::load,      // deserializer
             DataFixTypes.LEVEL          // type of data
         );
     
-    private final Map<String, Map<String, ToroProgram>> programs = new HashMap<>();
+    private final Map<String, Map<String, TerpProgram>> programs = new HashMap<>();
 
-    public void addProgram(String username, ToroProgram program) {
+    public void addProgram(String username, TerpProgram program) {
         programs.computeIfAbsent(username.toLowerCase(), k -> new HashMap<>()).put(program.getProgramName(), program);
         LOGGER.debug("Program {} uploaded, map is now {}", program.getProgramName(), programs);
         setDirty();
     }
 
-    public Map<String, ToroProgram> getProgramsFor(String playerName) {
+    public Map<String, TerpProgram> getProgramsFor(String playerName) {
         return programs.getOrDefault(playerName.toLowerCase(), Map.of());
     }
 
@@ -79,48 +79,48 @@ public class ToroProgramData extends SavedData {
 }
     */
     public CompoundTag save(CompoundTag tag) {
-        // iterate through Map<String, Map<String, ToroProgram>> programs
-        for (Entry<String, Map<String, ToroProgram>> entry : programs.entrySet()) {
+        // iterate through Map<String, Map<String, TerpProgram>> programs
+        for (Entry<String, Map<String, TerpProgram>> entry : programs.entrySet()) {
             String username = entry.getKey();
-            Map<String, ToroProgram> programMap = entry.getValue();
+            Map<String, TerpProgram> programMap = entry.getValue();
             
             CompoundTag programTag = new CompoundTag();
-            programMap.forEach((programName, toroProgram) -> {
-                programTag.put(programName, toroProgram.toNBT());
+            programMap.forEach((programName, terpProgram) -> {
+                programTag.put(programName, terpProgram.toNBT());
             });
             tag.put(username, programTag);
         }
         return tag;
     }
 
-    private ToroProgramData load(CompoundTag tag)
+    private TerpProgramData load(CompoundTag tag)
     {
-        ToroProgramData data = new ToroProgramData();
+        TerpProgramData data = new TerpProgramData();
         // go through each CompoundTag in tag
         for (String username : tag.getAllKeys()) {
-            LOGGER.debug("ToroProgramData (SaveData) loading "+username);
-            Map<String, ToroProgram> map = new HashMap<>();
+            LOGGER.debug("TerpProgramData (SaveData) loading "+username);
+            Map<String, TerpProgram> map = new HashMap<>();
             CompoundTag allProgramsTag = tag.getCompound(username);
             for (String programName : allProgramsTag.getAllKeys()) {
                 LOGGER.debug("loading programName "+programName);
                 CompoundTag programTag = allProgramsTag.getCompound(programName);
-                ToroProgram toroProgram = ToroProgram.fromNBT(programName, programTag);
-                LOGGER.debug("loaded program {} and it is {}", programName, toroProgram);
-                map.put(programName, toroProgram);
+                TerpProgram terpProgram = TerpProgram.fromNBT(programName, programTag);
+                LOGGER.debug("loaded program {} and it is {}", programName, terpProgram);
+                map.put(programName, terpProgram);
             }
             data.programs.put(username, map);
         }
         return data;
     }
     
-    public static ToroProgramData load(CompoundTag tag, HolderLookup.Provider provider) {
-        ToroProgramData data = new ToroProgramData();
+    public static TerpProgramData load(CompoundTag tag, HolderLookup.Provider provider) {
+        TerpProgramData data = new TerpProgramData();
         return data.load(tag);
     }
 
-    public static ToroProgramData get(ServerLevel level) {
+    public static TerpProgramData get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(
-            ToroProgramData.FACTORY, 
-            "toro");
+            TerpProgramData.FACTORY, 
+            "terp");
     }
 }

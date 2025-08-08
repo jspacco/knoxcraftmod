@@ -2,7 +2,7 @@ package edu.knox.knoxcraftmod.client;
 
 import edu.knox.knoxcraftmod.client.*;
 
-public class PToroExample 
+public class PTerpExample 
 {
 
     public static void main(String[] args)
@@ -14,10 +14,10 @@ public class PToroExample
         String username = "test";
         String password = "foobar123";
         
-        ParallelToro toro = new ParallelToro(programName, description);
+        ParallelTerp terp = new ParallelTerp(programName, description);
 
         // first thread
-        toro.addThread(t -> {
+        terp.addThread(t -> {
             t.nop();
             t.nop();
             t.nop();
@@ -25,7 +25,7 @@ public class PToroExample
             for (int i=0; i<base; i++) {
                 for (int j=0; j<base; j++) {
                     t.forward();
-                    t.setBlock(ToroBlockType.OBSIDIAN);
+                    t.setBlock(TerpBlockType.OBSIDIAN);
                 }
                 for (int j=0; j<base; j++) {
                     t.back();
@@ -34,7 +34,7 @@ public class PToroExample
             }
         });
         // second thread
-        toro.addThread(t -> {
+        terp.addThread(t -> {
             t.forward();
             t.up();
             t.right();
@@ -42,7 +42,7 @@ public class PToroExample
             for (int i=0; i<base; i++) {
                 for (int j=0; j<base; j++) {
                     t.forward();
-                    t.setBlock(ToroBlockType.OBSIDIAN);
+                    t.setBlock(TerpBlockType.OBSIDIAN);
                 }
                 for (int j=0; j<base; j++) {
                     t.back();
@@ -51,7 +51,7 @@ public class PToroExample
             }
         });
         // upload to server
-        ToroUploader.upload(serverUrl, toro, minecraftPlayer, username, password);
+        TerpUploader.upload(serverUrl, terp, minecraftPlayer, username, password);
     }
     
 }

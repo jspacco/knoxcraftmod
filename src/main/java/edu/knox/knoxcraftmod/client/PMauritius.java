@@ -12,17 +12,17 @@ public class PMauritius {
         String programName = "pflag";
         String description = "Mauritius in parallel!";
 
-        ParallelToro toro = new ParallelToro(programName, description);
+        ParallelTerp terp = new ParallelTerp(programName, description);
         
         int length = 12;
         int width = 4;
-        toro.addThread(t -> {
+        terp.addThread(t -> {
             for (int i=0; i<width*3; i++) t.nop();
 
             for (int i=0; i<width; i++) {
                 for (int j=0; j<length; j++) {
                     t.forward();
-                    t.setBlock(ToroBlockType.RED_WOOL);
+                    t.setBlock(TerpBlockType.RED_WOOL);
                 }
                 for (int j=0; j<length; j++) {
                     t.back();
@@ -31,14 +31,14 @@ public class PMauritius {
             }
             
         });
-        toro.addThread(t -> {
+        terp.addThread(t -> {
             for (int i=0; i<width; i++) t.right();
             for (int i=0; i<width*2; i++) t.nop();
 
             for (int i=0; i<width; i++) {
                 for (int j=0; j<length; j++) {
                     t.forward();
-                    t.setBlock(ToroBlockType.BLUE_WOOL);
+                    t.setBlock(TerpBlockType.BLUE_WOOL);
                 }
                 for (int j=0; j<length; j++) {
                     t.back();
@@ -47,14 +47,14 @@ public class PMauritius {
             }
         });
 
-        toro.addThread(t -> {
+        terp.addThread(t -> {
             for (int i=0; i<width*2; i++) t.right();
             for (int i=0; i<width; i++) t.nop();
 
             for (int i=0; i<width; i++) {
                 for (int j=0; j<length; j++) {
                     t.forward();
-                    t.setBlock(ToroBlockType.YELLOW_WOOL);
+                    t.setBlock(TerpBlockType.YELLOW_WOOL);
                 }
                 for (int j=0; j<length; j++) {
                     t.back();
@@ -63,13 +63,13 @@ public class PMauritius {
             }
         });
 
-        toro.addThread(t -> {
+        terp.addThread(t -> {
             for (int i=0; i<width*3; i++) t.right();
 
             for (int i=0; i<width; i++) {
                 for (int j=0; j<length; j++) {
                     t.forward();
-                    t.setBlock(ToroBlockType.GREEN_WOOL);
+                    t.setBlock(TerpBlockType.GREEN_WOOL);
                 }
                 for (int j=0; j<length; j++) {
                     t.back();
@@ -78,7 +78,7 @@ public class PMauritius {
             }
         });
 
-        ToroUploader.upload(serverUrl, toro, minecraftPlayername, username, password);
+        TerpUploader.upload(serverUrl, terp, minecraftPlayername, username, password);
     }
     
 }

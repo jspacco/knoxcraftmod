@@ -7,7 +7,7 @@ package edu.knox.knoxcraftmod.client;
  * menu then click the icon on the right, and search for 
  * a block. This will show you what a block will look like.
  */
-public enum ToroBlockType {
+public enum TerpBlockType {
     
     ACACIA_BUTTON("minecraft:acacia_button"),
     ACACIA_DOOR("minecraft:acacia_door"),
@@ -1076,7 +1076,7 @@ public enum ToroBlockType {
 
     private final String id;
 
-    ToroBlockType(String id) {
+    TerpBlockType(String id) {
         this.id = id;
     }
 
