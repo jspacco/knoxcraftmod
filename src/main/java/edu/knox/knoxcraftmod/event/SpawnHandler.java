@@ -6,7 +6,6 @@ import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

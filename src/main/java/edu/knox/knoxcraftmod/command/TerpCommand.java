@@ -43,10 +43,10 @@ public class TerpCommand
                 .then(Commands.literal("list")
                     .executes(ctx -> listPrograms(ctx.getSource())))
                 .then(Commands.literal("stop")
-                    .executes(ctx -> stopToro(ctx.getSource())))
+                    .executes(ctx -> stopTerp(ctx.getSource())))
                 .then(Commands.literal("help").executes(ctx -> {
                     ctx.getSource().sendSuccess(() ->
-                        Component.literal("Terp Commands:\n/toro summon\n/toro list\n/toro stop\n/toro help\n/toro forward|back|up|down|left|right\n/toro run <program>"), false);
+                        Component.literal("Terp Commands:\n/terp summon\n/terp list\n/terp stop\n/terp help\n/terp forward|back|up|down|left|right\n/terp run <program>"), false);
                     return 1;
                 }))
         );
@@ -84,31 +84,31 @@ public class TerpCommand
     private static int manualMove(CommandContext<CommandSourceStack> ctx, String action) {
         ServerPlayer player = ctx.getSource().getPlayer();
 
-        TerpTurtle toro = getMainTerp(player.getUUID());
-        if (toro == null) {
-            // Toro must already exist for a manual move
-            ctx.getSource().sendFailure(Component.literal("Toro not found."));
+        TerpTurtle terp = getMainTerp(player.getUUID());
+        if (terp == null) {
+            // Terp must already exist for a manual move
+            ctx.getSource().sendFailure(Component.literal("Terp not found."));
             return 0;
         }
 
         if (isRunning(player.getUUID())) {
-            // Toro must already exist for a manual move
-            ctx.getSource().sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro first. "));
+            // Terp must already exist for a manual move
+            ctx.getSource().sendFailure(Component.literal("Terp is busy! Use '/terp stop' to stop the Terp first. "));
             return 0;
         }
 
-        toro.moveToro(action);
+        terp.moveTerp(action);
 
-        ctx.getSource().sendSuccess(() -> Component.literal("Toro moved: " + action), false);
+        ctx.getSource().sendSuccess(() -> Component.literal("Terp moved: " + action), false);
         return 1;
     }
 
     private static boolean isRunning(UUID playerId) {
         if (!hasMainTerp(playerId)) return false;
-        TerpTurtle toro = getMainTerp(playerId);
-        // either the main toro is running (serial/single thread)
+        TerpTurtle terp = getMainTerp(playerId);
+        // either the main terp is running (serial/single thread)
         // or one of the threads is running
-        return toro.isRunning() || threadMap.containsKey(playerId) && 
+        return terp.isRunning() || threadMap.containsKey(playerId) && 
             threadMap.get(playerId).values().stream().anyMatch(t -> t.isRunning());
     }
 
@@ -117,30 +117,30 @@ public class TerpCommand
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
         if (player.getY() >= level.getMaxBuildHeight()) {
-            source.sendFailure(Component.literal("Cannot summon Toro above max build height. "));
+            source.sendFailure(Component.literal("Cannot summon Terp above max build height. "));
             return 0;
         }
         TerpTurtle terp = getOrCreateTerp(player, level);
         if (isRunning(player.getUUID())) {
-            source.sendFailure(Component.literal("Toro is busy! Use '/toro stop' to stop the Toro. "));
+            source.sendFailure(Component.literal("Terp is busy! Use '/terp stop' to stop the Terp. "));
             return 0;
         }
         moveTerpToEntity(terp, player);
-        source.sendSuccess(() -> Component.literal("Toro summoned."), false);
+        source.sendSuccess(() -> Component.literal("Terp summoned."), false);
         return 1;
     }
 
-    private static int stopToro(CommandSourceStack source)
+    private static int stopTerp(CommandSourceStack source)
     {
         ServerPlayer player = source.getPlayer();
         UUID uuid = player.getUUID();
-        TerpTurtle toro = getMainTerp(uuid);
-        if (toro == null) {
-            source.sendFailure(Component.literal("No Toro to stop. "));
+        TerpTurtle terp = getMainTerp(uuid);
+        if (terp == null) {
+            source.sendFailure(Component.literal("No Terp to stop. "));
             return 0;
         }
-        LOGGER.debug("Stopping toro "+toro.getUUID());
-        toro.stop();
+        LOGGER.debug("Stopping terp "+terp.getUUID());
+        terp.stop();
         LOGGER.debug("threadMap.keySet(): "+threadMap.keySet());
         if (threadMap.containsKey(uuid)) {
             LOGGER.debug("threadMap.get(uuid):" +threadMap.get(uuid).size());
@@ -152,13 +152,13 @@ public class TerpCommand
                 t.stop();
             }
         }
-        source.sendSuccess(() -> Component.literal("Toro stopped."), false);
+        source.sendSuccess(() -> Component.literal("Terp stopped."), false);
         return 1;
     }
 
     private static TerpTurtle getOrCreateTerp(ServerPlayer player, ServerLevel level)
     {
-        // get the player's toro, if one exists
+        // get the player's terp, if one exists
         TerpTurtle terp = getMainTerp(player.getUUID());
         if (terp != null) return terp;
 
@@ -168,8 +168,8 @@ public class TerpCommand
         
         setTerp(player.getUUID(), terp);
         terp.setOwnerUUID(player.getUUID());
-        // It feels like I should call moveToroToPlayer(toro, player) here, 
-        // but I know it will get called anytime I summon a toro, so I would be doing
+        // It feels like I should call moveTerpToPlayer(terp, player) here, 
+        // but I know it will get called anytime I summon a terp, so I would be doing
         // that twice. But it still feels like I should set the location here.
 
         // add Terp to the level, be sure to add on the server
@@ -185,16 +185,16 @@ public class TerpCommand
         return terp;
     }
 
-    private static void moveTerpToEntity(TerpTurtle toro, Entity entity)
+    private static void moveTerpToEntity(TerpTurtle terp, Entity entity)
     {
-        // moves the toro to the entity's location, matches the entities heading as well
-        toro.setPos(entity.getX(), entity.getY(), entity.getZ());
+        // moves the terp to the entity's location, matches the entities heading as well
+        terp.setPos(entity.getX(), entity.getY(), entity.getZ());
         Direction dir = Direction.fromDegrees(entity.getYRot());
-        toro.setTerpDirection(dir);
+        terp.setTerpDirection(dir);
     }
 
-    private static void setTerp(UUID uuid, TerpTurtle toro) {
-        terpMap.put(uuid, toro);
+    private static void setTerp(UUID uuid, TerpTurtle terp) {
+        terpMap.put(uuid, terp);
     }
 
     private static TerpTurtle getMainTerp(UUID uuid) {
@@ -238,7 +238,7 @@ public class TerpCommand
             terp.runProgram(serial.getInstructions());
         } else if (program instanceof ParallelTerpProgram parallel){
             // Parallel
-            // create and run toro thread for each set of instructions
+            // create and run terp thread for each set of instructions
             for (List<Instruction> instructions : parallel.getThreads()) {
                 TerpTurtle thread = spawnTerpThread(player, level, terp);
                 thread.setIsThread(true);
@@ -260,11 +260,11 @@ public class TerpCommand
     private static TerpTurtle spawnTerpThread(ServerPlayer player, ServerLevel level, Entity entity) {
         TerpTurtle terp = new TerpTurtle(EntityType.TURTLE, level);
         LOGGER.debug("Spawning new Terp with uuid {} and class {}", terp.getUUID(), terp.getClass());
-        // add toro thread to our map
+        // add terp thread to our map
         addTerpThread(player.getUUID(), terp);
         // set owner to player
         terp.setOwnerUUID(player.getUUID());
-        // move to match the location of the entity (which is the original toro)
+        // move to match the location of the entity (which is the original terp)
         moveTerpToEntity(terp, entity);
         level.addFreshEntity(terp);
         return terp;
@@ -304,7 +304,7 @@ public class TerpCommand
         return 1;
     }
 
-    public static void removeToroMapping(UUID uuid) {
+    public static void removeTerpMapping(UUID uuid) {
         if (uuid != null){
             terpMap.remove(uuid);
             threadMap.remove(uuid);

@@ -186,10 +186,10 @@ public class TerpTurtle extends Turtle {
         }
 
         // otherwise it was a move command
-        moveToro(instr.command);
+        moveTerp(instr.command);
     }
 
-    public void moveToro(String command)
+    public void moveTerp(String command)
     {
         BlockPos current = blockPosition();
 
