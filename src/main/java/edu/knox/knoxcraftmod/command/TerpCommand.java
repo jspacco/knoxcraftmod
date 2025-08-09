@@ -164,9 +164,9 @@ public class TerpCommand
 
         // can't find the terp, so make a new one
         terp = new TerpTurtle(EntityType.TURTLE, level);
-        LOGGER.info("Spawning Terp entity: {}", terp.getType().toString());
-        LOGGER.debug("Spawning new Terp with uuid {}", terp.getUUID());
-        setToro(player.getUUID(), terp);
+        LOGGER.info("Spawning new Terp with uuid {} and type {}", terp.getUUID(), terp.getType().toString());
+        
+        setTerp(player.getUUID(), terp);
         terp.setOwnerUUID(player.getUUID());
         // It feels like I should call moveToroToPlayer(toro, player) here, 
         // but I know it will get called anytime I summon a toro, so I would be doing
@@ -177,6 +177,9 @@ public class TerpCommand
             level.addFreshEntity(terp);
             LOGGER.debug("Terp fresh entity added");
         }
+
+        long count = level.getEntities(EntityType.TURTLE, e -> true).size();
+        LOGGER.info("Turtles in world: {}", count);
         
         
         return terp;
@@ -190,7 +193,7 @@ public class TerpCommand
         toro.setTerpDirection(dir);
     }
 
-    private static void setToro(UUID uuid, TerpTurtle toro) {
+    private static void setTerp(UUID uuid, TerpTurtle toro) {
         terpMap.put(uuid, toro);
     }
 
@@ -256,7 +259,7 @@ public class TerpCommand
 
     private static TerpTurtle spawnTerpThread(ServerPlayer player, ServerLevel level, Entity entity) {
         TerpTurtle terp = new TerpTurtle(EntityType.TURTLE, level);
-        LOGGER.debug("Spawning new Toro with uuid {}", terp.getUUID());
+        LOGGER.debug("Spawning new Terp with uuid {} and class {}", terp.getUUID(), terp.getClass());
         // add toro thread to our map
         addTerpThread(player.getUUID(), terp);
         // set owner to player

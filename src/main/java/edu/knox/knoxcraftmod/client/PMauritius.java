@@ -6,7 +6,7 @@ public class PMauritius {
     public static void main(String[] args)
     {
         String serverUrl = "http://localhost:8080";
-        String minecraftPlayername = "dev";
+        String minecraftPlayername = "spacdog";
         String username = "test";
         String password = "foobar123";
         String programName = "pflag";

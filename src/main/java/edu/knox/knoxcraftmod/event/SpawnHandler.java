@@ -8,19 +8,42 @@ import edu.knox.knoxcraftmod.KnoxcraftMod;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = KnoxcraftMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SpawnHandler {
     private static final Logger LOGGER = LogUtils.getLogger(); 
+    
+    @SubscribeEvent
+    public void onLeave(EntityLeaveLevelEvent e) {
+        if (e.getLevel().isClientSide()) return;
+        var ent = e.getEntity();
+
+        // MC has an internal removal reason; if available in your version, print it.
+        // (getRemovalReason() returns null if still present or not set)
+        String reason = null;
+        try {
+            var rr = ent.getRemovalReason(); // may exist in your 1.21.5 mappings
+            reason = (rr == null) ? "unknown" : rr.toString();
+        } catch (Throwable ignored) {
+            reason = "unknown";
+        }
+
+        LOGGER.debug("[LEAVE] " + ent.getType().toShortString() + " id=" + ent.getId() +
+            " reason=" + reason + " pos=" + ent.position());
+    }
+
+    
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+
         // Only enforce on the server; vanilla clients never run this mod.
         if (event.getLevel().isClientSide()) return;
 
         // If you disabled mob spawning in server.properties, bail out early.
-        if (!event.getLevel().getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return;
+        //if (!event.getLevel().getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return;
 
         var e = event.getEntity();
 
@@ -28,7 +51,10 @@ public class SpawnHandler {
         if (e instanceof Player) return;
 
         // Allow turtles so vanilla clients can see your "Terp" (which you'll spawn as a vanilla turtle).
-        if (e.getType() == net.minecraft.world.entity.EntityType.TURTLE) return;
+        if (e.getType() == net.minecraft.world.entity.EntityType.TURTLE) {
+            LOGGER.debug("allowing spawn of turtle {}", e);
+            return;
+        }
 
         LOGGER.debug("Canceling spawn of {}", e.getClass());
 

@@ -20,6 +20,7 @@ public abstract class TerpProgram
     static final String INSTRUCTIONS = "instructions";
     static final String TYPE = "type";
 
+    
     protected String programName;
     protected String description;
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -73,7 +74,7 @@ public abstract class TerpProgram
             ListTag instructionList = tag.getList(INSTRUCTIONS, Tag.TAG_COMPOUND);
             LOGGER.trace("instructionList tag {} {} {}", instructionList.getAsString(), instructionList.toString(), instructionList.size());
             List<Instruction> instructions = readFromTag(instructionList);
-            LOGGER.debug("serial program just read {} instructions", instructions.size());
+            LOGGER.trace("serial program just read {} instructions", instructions.size());
             return new SerialTerpProgram(programName, description, instructions);
         }
     }
@@ -81,11 +82,8 @@ public abstract class TerpProgram
     private static List<Instruction> readFromTag(ListTag instructionList) {
         List<Instruction> instructions = new ArrayList<>();
         for (Tag t : instructionList) {
-            LOGGER.debug("instruction tag type {}, instanceof CompoundTag {} and tostring {}", t.getType(), t instanceof CompoundTag, t.toString());
             if (t instanceof CompoundTag instrTag) {
-                Instruction instr = Instruction.fromNBT(instrTag);
-                LOGGER.trace("reading instr from savedata {}", instr);
-                instructions.add(instr);
+                instructions.add(Instruction.fromNBT(instrTag));
             }
         }
         return instructions;

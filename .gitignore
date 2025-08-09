@@ -26,5 +26,6 @@ forge*changelog.txt
 
 TODO.md
 .DS_Store
-tmp
+tmp*
+ztmp*
 OUT

@@ -4,6 +4,7 @@ package edu.knox.knoxcraftmod.event;
 import edu.knox.knoxcraftmod.KnoxcraftMod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -53,5 +54,16 @@ public class PlayerEventHandler {
         }
     }
 
+    @SubscribeEvent
+    public static void onItemToss(ItemTossEvent event) {
+        // Cancel drop entirely
+        event.setCanceled(true);
+
+        // Optional: tell the player why
+        event.getPlayer().displayClientMessage(
+            Component.literal("Dropping items is disabled."),
+            true // action bar instead of chat
+        );
+    }
 
 }
