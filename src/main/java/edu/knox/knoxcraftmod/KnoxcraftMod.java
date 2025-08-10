@@ -1,6 +1,5 @@
 package edu.knox.knoxcraftmod;
 
-import com.google.errorprone.annotations.Keep;
 import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.command.TerpCommand;
