@@ -5,8 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import edu.knox.knoxcraftmod.client.*;
-
 public class ParallelTerp {
 
     private String programName;

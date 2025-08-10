@@ -56,13 +56,12 @@ public class PlayerEventHandler {
 
     @SubscribeEvent
     public static void onItemToss(ItemTossEvent event) {
-        // Cancel drop entirely
+        // Cancel dropping items
         event.setCanceled(true);
 
-        // Optional: tell the player why
         event.getPlayer().displayClientMessage(
             Component.literal("Dropping items is disabled."),
-            true // action bar instead of chat
+            true 
         );
     }
 

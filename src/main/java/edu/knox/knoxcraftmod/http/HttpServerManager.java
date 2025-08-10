@@ -97,6 +97,7 @@ public class HttpServerManager {
 
             if (!type.equals("serial") && !type.equals("parallel")) {
                 LOGGER.error("Unknown type "+type);
+                throw new RuntimeException("Unknown type (not serial or parallel): "+type);
             }
             TerpProgram program = null;
             if (type.equals("serial")) {

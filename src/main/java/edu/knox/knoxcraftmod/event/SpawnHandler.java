@@ -41,15 +41,13 @@ public class SpawnHandler {
         // Only enforce on the server; vanilla clients never run this mod.
         if (event.getLevel().isClientSide()) return;
 
-        // If you disabled mob spawning in server.properties, bail out early.
-        //if (!event.getLevel().getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) return;
-
         var e = event.getEntity();
 
         // Let players through
         if (e instanceof Player) return;
 
-        // Allow turtles so vanilla clients can see your "Terp" (which you'll spawn as a vanilla turtle).
+        // Allow turtles so vanilla clients can see "Terps" 
+        // (which spawn as a vanilla turtle on client).
         if (e.getType() == net.minecraft.world.entity.EntityType.TURTLE) {
             LOGGER.debug("allowing spawn of turtle {}", e);
             return;

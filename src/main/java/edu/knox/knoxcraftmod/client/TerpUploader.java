@@ -21,7 +21,7 @@ import com.google.gson.JsonSerializer;
  * Create an HTTP client and send a POST request to the server
  * with the program delivered as a JSON payload.
  * 
- * Basically, the Toro client generates a series of instructions
+ * Basically, the Terp client generates a series of instructions
  * that are serialized into JSON and uploaded. The server
  * never runs the student code.
  */
@@ -52,14 +52,14 @@ public class TerpUploader
     }
 
     public static void upload(String serverUrl, 
-        Terp toro,
+        Terp terp,
         String minecraftPlayername,
         String username, String password)
     {
         Map<String, Object> json = Map.of(
-            "programName", toro.getProgramName(),
-            "description", toro.getDescription(),
-            "instructions", toro.getInstructions());
+            "programName", terp.getProgramName(),
+            "description", terp.getDescription(),
+            "instructions", terp.getInstructions());
         
         String jsonPayload = GSON.toJson(json);
 
@@ -69,14 +69,14 @@ public class TerpUploader
     }
 
     public static void upload(String serverUrl, 
-        ParallelTerp toro,
+        ParallelTerp terp,
         String minecraftPlayername,
         String username, String password)
     {
         Map<String, Object> json = Map.of(
-            "programName", toro.getProgramName(),
-            "description", toro.getDescription(),
-            "threads", toro.getAllThreads());
+            "programName", terp.getProgramName(),
+            "description", terp.getDescription(),
+            "threads", terp.getAllThreads());
         
         String jsonPayload = GSON.toJson(json);
 

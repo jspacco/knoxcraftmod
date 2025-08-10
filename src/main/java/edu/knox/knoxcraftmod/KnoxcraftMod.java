@@ -1,5 +1,6 @@
 package edu.knox.knoxcraftmod;
 
+import com.google.errorprone.annotations.Keep;
 import com.mojang.logging.LogUtils;
 
 import edu.knox.knoxcraftmod.command.TerpCommand;
@@ -79,10 +80,13 @@ public class KnoxcraftMod
                 List<String> defaultProps = List.of(
                     "level-type=flat",
                     "generate-structures=false",
-                    "gamemode=survival",
+                    "gamemode=creative",
                     "spawn-monsters=false",
-                    "spawn-animals=false",
-                    "motd=Knoxcraft Superflat Server"
+                    "# must be true or the server throws out spawns",
+                    "spawn-animals=true", // this has to be set to true
+                    "motd=Knoxcraft Superflat Server",
+                    "spawn-npcs=false",
+                    "difficulty=easy"
                 );
                 Files.write(propsPath, defaultProps);
                 KnoxcraftMod.LOGGER.info("Generated default server.properties");

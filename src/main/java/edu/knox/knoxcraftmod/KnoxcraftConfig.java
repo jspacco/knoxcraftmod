@@ -11,8 +11,8 @@ public class KnoxcraftConfig {
     private static final ForgeConfigSpec.IntValue httpPort;
     private static final ForgeConfigSpec.BooleanValue loginRequired;
 
-   public static int HTTP_PORT;
-   public static boolean LOGIN_REQUIRED;
+    public static int HTTP_PORT;
+    public static boolean LOGIN_REQUIRED;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();

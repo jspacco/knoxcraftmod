@@ -7,9 +7,9 @@ class TerpInstruction
         @SuppressWarnings("unused")
         private final TerpBlockType blockType;
 
-        TerpInstruction(TerpCommand command, TerpBlockType toroBlockType) {
+        TerpInstruction(TerpCommand command, TerpBlockType terpBlockType) {
             this.command = command;
-            this.blockType = toroBlockType;
+            this.blockType = terpBlockType;
         }
 
         TerpInstruction(TerpCommand command) {

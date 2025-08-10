@@ -32,7 +32,7 @@ public class TerpTurtle extends Turtle {
     public TerpTurtle(EntityType<? extends Turtle> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
         this.MAX_Y = pLevel.getMaxBuildHeight();
-        // toros can fly
+        // terps can fly
         this.setNoGravity(true);
         this.setInvulnerable(true);
         this.lookControl = new LookControl(this) {
@@ -89,7 +89,7 @@ public class TerpTurtle extends Turtle {
         };
     }
 
-    public Direction getToroDirection() {
+    public Direction getTerpDirection() {
         return direction;
     }
 
@@ -124,11 +124,11 @@ public class TerpTurtle extends Turtle {
 
         if (!level().isClientSide) {
             // Server sets Y rotation
-            setYRot(getToroDirection().toYaw());
+            setYRot(getTerpDirection().toYaw());
             setYHeadRot(getYRot());
             setYBodyRot(getYRot());
             // This should never happen!
-            // but if it somehow does, move the Toro to the highest legal location
+            // but if it somehow does, move the Terp to the highest legal location
             if (this.getY() >= MAX_Y) {
                 this.setPos(this.getX(), MAX_Y - 1, this.getZ());
             }
@@ -196,7 +196,7 @@ public class TerpTurtle extends Turtle {
         BlockPos target = switch (command) {
             // nop command is a no-op
             case "nop" -> current;
-            case "forward" -> offset(current, getToroDirection());
+            case "forward" -> offset(current, getTerpDirection());
             case "up" -> {
                 if (current.getY() >= MAX_Y) {
                     yield current;
@@ -210,9 +210,9 @@ public class TerpTurtle extends Turtle {
                 }
                 yield current.below();
             }
-            case "back" -> offset(current, getToroDirection().opposite());
-            case "left" -> offset(current, getToroDirection().turnLeft());
-            case "right" -> offset(current, getToroDirection().turnRight());
+            case "back" -> offset(current, getTerpDirection().opposite());
+            case "left" -> offset(current, getTerpDirection().turnLeft());
+            case "right" -> offset(current, getTerpDirection().turnRight());
             default -> current;
         };
 
@@ -223,10 +223,10 @@ public class TerpTurtle extends Turtle {
             }
             
             case "turnleft", "tl" -> {
-                setTerpDirection(getToroDirection().turnLeft());
+                setTerpDirection(getTerpDirection().turnLeft());
             }
             case "turnright", "tr" -> {
-                setTerpDirection(getToroDirection().turnRight());
+                setTerpDirection(getTerpDirection().turnRight());
             }
         }
     }
@@ -258,7 +258,7 @@ public class TerpTurtle extends Turtle {
         return this.ownerUUID;
     }
 
-    // Save and load the Toro
+    // Save and load the Terp
     // We know the UUID because this requires the person to be logged in
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
@@ -340,7 +340,7 @@ public class TerpTurtle extends Turtle {
         super.onAddedToWorld();
 
         if (!level().isClientSide) {
-            this.setYRot(getToroDirection().toYaw());
+            this.setYRot(getTerpDirection().toYaw());
         }
     }
 
