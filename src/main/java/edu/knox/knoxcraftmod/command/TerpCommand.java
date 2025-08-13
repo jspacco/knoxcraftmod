@@ -1,5 +1,7 @@
 package edu.knox.knoxcraftmod.command;
 
+import static java.lang.String.format;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import edu.knox.knoxcraftmod.entity.TerpTurtle;
+import edu.knox.knoxcraftmod.util.Msg;
 import edu.knox.knoxcraftmod.data.TerpProgramData;
 import net.minecraft.network.chat.Component;
 
@@ -45,8 +48,9 @@ public class TerpCommand
                 .then(Commands.literal("stop")
                     .executes(ctx -> stopTerp(ctx.getSource())))
                 .then(Commands.literal("help").executes(ctx -> {
-                    ctx.getSource().sendSuccess(() ->
-                        Component.literal("Terp Commands:\n/terp summon\n/terp list\n/terp stop\n/terp help\n/terp forward|back|up|down|left|right\n/terp run <program>"), false);
+                    Msg.reply(ctx.getSource(), 
+                        "Terp Commands:\n/terp summon\n/terp list\n/terp stop\n/terp help\n/terp forward|back|up|down|left|right\n/terp run <program>", 
+                        false);
                     return 1;
                 }))
         );
@@ -71,11 +75,12 @@ public class TerpCommand
                 try {
                     tools.BlockDumper.dumpBlockModels(ctx.getSource().getLevel());
                 } catch (Exception e) {
-                    ctx.getSource().sendFailure(Component.literal("failure! " +e.toString()));
+                    Msg.fail(ctx.getSource(), "failure! " +e.toString());
                     return 0;
                 }
                 
-                ctx.getSource().sendSuccess(() -> Component.literal("Success"), false);
+                Msg.reply(ctx.getSource(), "Success", false);
+                //ctx.getSource().sendSuccess(() -> Component.literal("Success"), false);
                 return 1;
             }
         ));
@@ -87,19 +92,19 @@ public class TerpCommand
         TerpTurtle terp = getMainTerp(player.getUUID());
         if (terp == null) {
             // Terp must already exist for a manual move
-            ctx.getSource().sendFailure(Component.literal("Terp not found."));
+            Msg.fail(ctx.getSource(), "Terp not found.");
             return 0;
         }
 
         if (isRunning(player.getUUID())) {
             // Terp must already exist for a manual move
-            ctx.getSource().sendFailure(Component.literal("Terp is busy! Use '/terp stop' to stop the Terp first. "));
+            Msg.fail(ctx.getSource(), "Terp is busy! Use '/terp stop' to stop the Terp first. ");
             return 0;
         }
 
         terp.moveTerp(action);
 
-        ctx.getSource().sendSuccess(() -> Component.literal("Terp moved: " + action), false);
+        Msg.reply(ctx.getSource(), "Terp moved: " + action, false);
         return 1;
     }
 
@@ -117,16 +122,16 @@ public class TerpCommand
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
         if (player.getY() >= level.getMaxBuildHeight()) {
-            source.sendFailure(Component.literal("Cannot summon Terp above max build height. "));
+            Msg.fail(source, "Cannot summon Terp above max build height. ");
             return 0;
         }
         TerpTurtle terp = getOrCreateTerp(player, level);
         if (isRunning(player.getUUID())) {
-            source.sendFailure(Component.literal("Terp is busy! Use '/terp stop' to stop the Terp. "));
+            Msg.fail(source, "Terp is busy! Use '/terp stop' to stop the Terp. ");
             return 0;
         }
         moveTerpToEntity(terp, player);
-        source.sendSuccess(() -> Component.literal("Terp summoned."), false);
+        Msg.send(player, "Terp Summoned. ", true);
         return 1;
     }
 
@@ -136,7 +141,7 @@ public class TerpCommand
         UUID uuid = player.getUUID();
         TerpTurtle terp = getMainTerp(uuid);
         if (terp == null) {
-            source.sendFailure(Component.literal("No Terp to stop. "));
+            Msg.send(player, "No Terp to stop.", true);
             return 0;
         }
         LOGGER.debug("Stopping terp "+terp.getUUID());
@@ -152,7 +157,8 @@ public class TerpCommand
                 t.stop();
             }
         }
-        source.sendSuccess(() -> Component.literal("Terp stopped."), false);
+
+        Msg.send(player, "Terp stopped.", true);
         return 1;
     }
 
@@ -212,12 +218,12 @@ public class TerpCommand
         TerpTurtle terp = getMainTerp(player.getUUID());
         
         if (terp == null) {
-            source.sendFailure(Component.literal("First summon your Terp with '/terp summon'"));
+            Msg.fail(source, "First summon your Terp with '/terp summon'");
             return 0;
         }
 
         if (isRunning(player.getUUID())) {
-            source.sendFailure(Component.literal("Terp is busy! Wait or stop '/terp stop' "));
+            Msg.fail(source, "Terp is busy! Wait or stop '/terp stop' ");
             return 0;
         }
 
@@ -229,7 +235,7 @@ public class TerpCommand
         LOGGER.debug("Game Profile name is "+playerName);
         TerpProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(programName);
         if (program == null) {
-            source.sendFailure(Component.literal(String.format("Program '%s' not found.", programName)));
+            Msg.fail(source, format("Program '%s' not found", programName));
             return 0;
         }
 
@@ -248,12 +254,11 @@ public class TerpCommand
             }
         } else {
             LOGGER.error("Program is type {} which is not serial or parallel", program.getClass());
-            source.sendFailure(Component.literal("Error! Program is type "+program.getClass()+", not serial or parallel; this should never happen"));
+            Msg.fail(source, "Error! Program is type "+program.getClass()+", not serial or parallel; this should never happen.");
             return 0;
         }
 
-        
-        source.sendSuccess(() -> Component.literal("Program "+programName+"loaded!"), false);
+        Msg.send(player, format("Program %s loaded.", programName), false);
         return 1;
     }
 
@@ -291,14 +296,14 @@ public class TerpCommand
         LOGGER.debug("Game Profile playerName is "+playerName);
         var map = data.getProgramsFor(playerName);
         if (map.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("No programs found."), false);
+            Msg.send(player, "No programs found.", true);
             return 0;
         }
 
-        source.sendSuccess(() -> Component.literal("Programs:"), false);
+        Msg.send(player, "Programs: ", false);
         for (String name : map.keySet()) {
             LOGGER.debug("Program name: "+name);
-            source.sendSuccess(() -> Component.literal("-> " + name +": "+map.get(name).getDescription()), false);
+            Msg.send(player, "-> " + name +": "+map.get(name).getDescription(), false);
         }
 
         return 1;

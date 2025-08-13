@@ -2,13 +2,13 @@
 package edu.knox.knoxcraftmod.event;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
+import edu.knox.knoxcraftmod.util.Msg;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -25,23 +25,32 @@ public class PlayerEventHandler {
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
         if (event.getEntity() instanceof Player player) {
             event.setCanceled(true);
-            player.sendSystemMessage(Component.literal("Manually placing blocks is disabled! Write code to make your Toro do it for you"));
+            Msg.send(player, "Manually placing blocks is disabled! Write code to make your Terp do it for you", true);
         }
     }
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        Player player = event.getPlayer();
+        if (player != null && player.hasPermissions(4)) {
+            // ops can break blocks
+            return;
+        }
         if (event.getPlayer() != null) {
             event.setCanceled(true);
-            event.getPlayer().sendSystemMessage(Component.literal("Manually breaking blocks is disabled! Write code to make your Toro do it for you"));
+            Msg.send(event.getPlayer(), 
+                "Manually breaking blocks is disabled! Write code to make your Terp do it for you",
+                true);
         }
     }
 
     @SubscribeEvent
     public static void onRightClick(PlayerInteractEvent.RightClickItem event) {
-        if (event.getEntity().isCreative()) {
+        if (event.getEntity() instanceof Player player) {
             event.setCanceled(true);
-            event.getEntity().sendSystemMessage(Component.literal("Item use is disabled."));
+            Msg.send(player, 
+                "Item use is disabled.",
+                true);
         }
     }
 
@@ -50,7 +59,7 @@ public class PlayerEventHandler {
         if (event.getEntity() instanceof Player player &&
             player.isCreative()) {
             event.setCanceled(true);
-            player.sendSystemMessage(Component.literal("Item pickup is disabled."));
+            Msg.send(player, "Item pickup is disabled.", true);
         }
     }
 
@@ -59,10 +68,7 @@ public class PlayerEventHandler {
         // Cancel dropping items
         event.setCanceled(true);
 
-        event.getPlayer().displayClientMessage(
-            Component.literal("Dropping items is disabled."),
-            true 
-        );
+        Msg.send(event.getPlayer(), "Dropping items is disabled.", true);
     }
 
 }
