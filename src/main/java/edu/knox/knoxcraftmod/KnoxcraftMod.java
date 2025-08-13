@@ -11,6 +11,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -35,22 +36,17 @@ public class KnoxcraftMod
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
     
-    public KnoxcraftMod()
+    // use constructor injection
+    public KnoxcraftMod(final FMLJavaModLoadingContext context)
     {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
-        // Register the commonSetup method for modloading
+        IEventBus modEventBus = context.getModEventBus();   // no .get()
         modEventBus.addListener(this::commonSetup);
 
-        // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
+        // Forge config registration (not ModContainer)
+        context.registerConfig(ModConfig.Type.COMMON, KnoxcraftConfig.COMMON_CONFIG);
 
-        // register KnoxcraftMod specific config information
-        // putting into COMMON rather than SERVERCONFIG so that
-        // it's in one easy to find place (config) and not 
-        // in a per-world location (saves/WORLD_NAME/serverconfig)
-        // that needs to be set for every new world
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, KnoxcraftConfig.COMMON_CONFIG);
+        // Global Forge event bus
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)

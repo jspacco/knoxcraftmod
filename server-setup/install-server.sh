@@ -8,13 +8,10 @@ if [[ -z "$MC_DIR" ]]; then
     exit 1
 fi
 
-#
-# It's possible to download the installer jar from the Forge Maven repository.
-#
-# curl -O -J https://maven.minecraftforge.net/net/minecraftforge/forge/1.21-51.0.33/forge-1.21-51.0.33-installer.jar
-
 # installer jar
-INSTALLER="forge-1.21-51.0.33-installer.jar"  
+INSTALLER="forge-1.21-51.0.33-installer.jar"
+# mod file
+MOD_FILE="build/libs/knoxcraftmod-0.0.1.jar"
 
 mkdir -p "$MC_DIR"
 cp "$INSTALLER" "$MC_DIR/"
@@ -32,7 +29,7 @@ cat > server.properties <<'EOF'
 spawn-animals=true
 spawn-monsters=false
 spawn-npcs=false
-difficulty=peaceful
+difficulty=normal
 gamemode=creative
 spawn-protection=0
 generate-structures=false
@@ -40,11 +37,10 @@ level-type=flat
 generator-settings={}
 view-distance=10
 simulation-distance=10
-motd=Forge Test Server
+motd=Knoxcraft Server
 EOF
 
-# 3) curl mod jarfile
-# curl -O -J https://github.com/yourusername/yourmod/releases/latest/download/yourmod.jar
+cp ../$MOD_FILE mods/
 
 # 4) First run
 #   The run script is created by the installer; use nogui to avoid GUI pop.
