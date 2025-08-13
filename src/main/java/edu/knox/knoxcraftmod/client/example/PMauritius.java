@@ -1,4 +1,4 @@
-package edu.knox.knoxcraftmod.client;
+package edu.knox.knoxcraftmod.client.example;
 
 import edu.knox.knoxcraftmod.client.*;
 
