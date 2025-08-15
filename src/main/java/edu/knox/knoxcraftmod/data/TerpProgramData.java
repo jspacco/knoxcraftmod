@@ -7,22 +7,88 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
 
 import edu.knox.knoxcraftmod.command.TerpProgram;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 public class TerpProgramData extends SavedData {
     private static final Logger LOGGER = LogUtils.getLogger();
-    public static final SavedData.Factory<TerpProgramData> FACTORY =
-        new SavedData.Factory<>(
-            TerpProgramData::new,       // constructor
-            TerpProgramData::load,      // deserializer
-            DataFixTypes.LEVEL          // type of data
+
+
+    /* -------------------------------------------------------------
+     * Passthrough CODEC: delegates to our existing NBT format
+     * ------------------------------------------------------------- */
+    public static final Codec<TerpProgramData> CODEC =
+        Codec.PASSTHROUGH.comapFlatMap(
+            // decode: Dynamic<?> -> TerpProgramData
+            dyn -> {
+                try {
+                    CompoundTag root = (CompoundTag) dyn.convert(NbtOps.INSTANCE).getValue();
+                    TerpProgramData data = new TerpProgramData();
+                    data.readFromRootTag(root);
+                    return DataResult.success(data);
+                } catch (Exception e) {
+                    return DataResult.error(() -> "TerpProgramData decode failed: " + e.getMessage());
+                }
+            },
+            // encode: TerpProgramData -> Dynamic<?>
+            data -> {
+                CompoundTag root = data.writeToRootTag();
+                return new Dynamic<>(NbtOps.INSTANCE, root);
+            }
         );
+
+     public static final SavedDataType<TerpProgramData> TYPE_WITH_CTX =
+        new SavedDataType<>(
+            "terp",
+            ctx -> new TerpProgramData(),
+            ctx -> CODEC,
+            DataFixTypes.LEVEL
+        );
+    
+    /* -------------------------------------------------------------
+     * Codec helpers: keep your existing NBT layout intact
+     * ------------------------------------------------------------- */
+    private void readFromRootTag(CompoundTag root) {
+        for (String username : root.keySet()) {
+            CompoundTag programsByUser = root.getCompound(username).get();
+            Map<String, TerpProgram> byName = new HashMap<>();
+            for (String programName : programsByUser.keySet()) {
+                CompoundTag programTag = programsByUser.getCompound(programName).get();
+                TerpProgram tp = TerpProgram.fromNBT(programName, programTag);
+                byName.put(programName, tp);
+            }
+            programs.put(username, byName);
+        }
+    }
+
+    private CompoundTag writeToRootTag() {
+        CompoundTag root = new CompoundTag();
+        for (var entry : programs.entrySet()) {
+            String username = entry.getKey();
+            CompoundTag byUser = new CompoundTag();
+            for (var p : entry.getValue().entrySet()) {
+                String programName = p.getKey();
+                TerpProgram tp = p.getValue();
+                byUser.put(programName, tp.toNBT());
+            }
+            root.put(username, byUser);
+        }
+        return root;
+    }
+
+    public static final SavedDataType<TerpProgramData> TYPE = 
+        new SavedDataType<>("terp", TerpProgramData::new, CODEC, DataFixTypes.LEVEL);
+            
     
     private final Map<String, Map<String, TerpProgram>> programs = new HashMap<>();
 
@@ -36,10 +102,10 @@ public class TerpProgramData extends SavedData {
         return programs.getOrDefault(playerName.toLowerCase(), Map.of());
     }
 
-    @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
-        return save(tag);
-    }
+    // @Override
+    // public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+    //     return save(tag);
+    // }
     
     /*
     Shape of the NBT data:
@@ -93,17 +159,17 @@ public class TerpProgramData extends SavedData {
         return tag;
     }
 
-    private TerpProgramData load(CompoundTag tag)
+    public TerpProgramData load(CompoundTag tag)
     {
         TerpProgramData data = new TerpProgramData();
         // go through each CompoundTag in tag
-        for (String username : tag.getAllKeys()) {
+        for (String username : tag.keySet()) {
             LOGGER.debug("TerpProgramData (SaveData) loading "+username);
             Map<String, TerpProgram> map = new HashMap<>();
-            CompoundTag allProgramsTag = tag.getCompound(username);
-            for (String programName : allProgramsTag.getAllKeys()) {
+            CompoundTag allProgramsTag = tag.getCompound(username).get();
+            for (String programName : allProgramsTag.keySet()) {
                 LOGGER.debug("loading programName "+programName);
-                CompoundTag programTag = allProgramsTag.getCompound(programName);
+                CompoundTag programTag = allProgramsTag.getCompound(programName).get();
                 TerpProgram terpProgram = TerpProgram.fromNBT(programName, programTag);
                 LOGGER.debug("loaded program {} and it is {}", programName, terpProgram);
                 map.put(programName, terpProgram);
@@ -112,15 +178,23 @@ public class TerpProgramData extends SavedData {
         }
         return data;
     }
-    
+
+    public TerpProgramData create() {
+        return new TerpProgramData();
+    }
+
     public static TerpProgramData load(CompoundTag tag, HolderLookup.Provider provider) {
         TerpProgramData data = new TerpProgramData();
         return data.load(tag);
     }
 
+    // public static TerpProgramData get(ServerLevel level) {
+    //     return level.getDataStorage().computeIfAbsent(
+    //         TerpProgramData.FACTORY, 
+    //         "terp");
+    // }
+
     public static TerpProgramData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(
-            TerpProgramData.FACTORY, 
-            "terp");
+        return level.getDataStorage().computeIfAbsent(TYPE_WITH_CTX);
     }
 }

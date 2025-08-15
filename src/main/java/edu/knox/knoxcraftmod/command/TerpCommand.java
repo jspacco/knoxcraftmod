@@ -121,7 +121,7 @@ public class TerpCommand
     {
         ServerPlayer player = source.getPlayer();
         ServerLevel level = source.getLevel();
-        if (player.getY() >= level.getMaxBuildHeight()) {
+        if (player.getY() >= level.getMaxY()) {
             Msg.fail(source, "Cannot summon Terp above max build height. ");
             return 0;
         }

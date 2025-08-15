@@ -1,6 +1,7 @@
 package edu.knox.knoxcraftmod.event;
 
 import edu.knox.knoxcraftmod.KnoxcraftMod;
+import edu.knox.knoxcraftmod.util.Msg;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -17,7 +18,7 @@ public class PortalBlocker {
         // prevent entities from teleporting
         if (event.getDimension() == Level.NETHER || event.getDimension() == Level.END) {
             if (event.getEntity() instanceof ServerPlayer player) {
-                player.sendSystemMessage(Component.literal("Portal travel is disabled."));
+                Msg.send(player, "Portal travel is disabled.", true);
             }
             event.setCanceled(true);
         }

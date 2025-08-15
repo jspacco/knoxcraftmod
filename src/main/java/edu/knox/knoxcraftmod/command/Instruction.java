@@ -21,8 +21,8 @@ public class Instruction {
     }
 
     public static Instruction fromNBT(CompoundTag tag) {
-        String cmd = tag.getString("cmd");
-        String block = tag.contains("blk") ? tag.getString("blk") : null;
+        String cmd = tag.getString("cmd").get();
+        String block = tag.getString("blk").orElse(null);
         return new Instruction(cmd, block);
     }
 

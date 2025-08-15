@@ -12,11 +12,13 @@ import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.TerpCommand;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -31,7 +33,7 @@ public class TerpTurtle extends Turtle {
 
     public TerpTurtle(EntityType<? extends Turtle> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
-        this.MAX_Y = pLevel.getMaxBuildHeight();
+        this.MAX_Y = pLevel.getMaxY();
         // terps can fly
         this.setNoGravity(true);
         this.setInvulnerable(true);
@@ -93,12 +95,6 @@ public class TerpTurtle extends Turtle {
         return direction;
     }
 
-    @Override
-    public boolean hurt(DamageSource source, float amount) {
-        // invulnerable turtle
-        return false; 
-    }
-
     public void runProgram(List<Instruction> instructions)
     {
         this.program = instructions;
@@ -150,21 +146,12 @@ public class TerpTurtle extends Turtle {
         // setBlock
         if (instr.command.equals(SET_BLOCK)) {
             if (this.level() instanceof ServerLevel serverLevel) {
-                var blockRegistry = serverLevel.registryAccess()
-                    .registryOrThrow(Registries.BLOCK);
-
                 // block types are stored as: "minecraft:dirt"
-                String[] tmp = instr.blockType.split(":");
-                if (tmp.length != 2) {
-                    LOGGER.error("Unknown block type: {}", instr.blockType);
-                    return;
-                }
-                String pNamespace = tmp[0];
-                String pPath = tmp[1];
-                
-                Block block = blockRegistry.getOptional(ResourceLocation
-                    .fromNamespaceAndPath(pNamespace, pPath))
-                    .orElse(null);
+                HolderLookup.Provider regs = this.level().registryAccess();
+                HolderGetter<Block> blocks = regs.lookupOrThrow(Registries.BLOCK);
+                ResourceLocation loc = ResourceLocation.parse(instr.blockType);
+                ResourceKey<Block> key = ResourceKey.create(Registries.BLOCK, loc);
+                Block block = blocks.getOrThrow(key).value();
 
                 if (block != null) {
                     BlockPos current = blockPosition();
@@ -264,16 +251,29 @@ public class TerpTurtle extends Turtle {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         if (ownerUUID != null) {
-            tag.putUUID("owner", ownerUUID);
+            saveUUID(ownerUUID, tag, "owner");
         }
+    }
+
+    // the NBT api seems to have changed between 1.21.1 and 1.21.5
+    // we've lost get/save UUID method, and I guess we get back Optional<T> now?
+    // I'm abstracting away save/load UUID into static methods
+    // these hopefully will act as shims in case the API changes again
+    private static void saveUUID(UUID uuid, CompoundTag tag, String key) {
+        tag.putString(key, uuid.toString());
+    }
+
+    private static UUID loadUUID(CompoundTag tag, String key) {
+        if (tag.contains(key)) {
+            return UUID.fromString(tag.getString(key).get());
+        }
+        return null;
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.hasUUID("owner")) {
-            ownerUUID = tag.getUUID("owner");
-        }
+        ownerUUID = loadUUID(tag, "owner");
     }
 
     @Override

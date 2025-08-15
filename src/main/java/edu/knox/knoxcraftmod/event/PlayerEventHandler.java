@@ -9,6 +9,7 @@ import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -32,9 +33,11 @@ public class PlayerEventHandler {
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         Player player = event.getPlayer();
-        if (player != null && player.hasPermissions(4)) {
-            // ops can break blocks
-            return;
+        if (player instanceof ServerPlayer sPlayer) {
+            if (player != null && sPlayer.createCommandSourceStack().hasPermission(4)){
+                // ops can break blocks
+                return;
+            }
         }
         if (event.getPlayer() != null) {
             event.setCanceled(true);

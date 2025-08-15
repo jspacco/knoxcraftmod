@@ -51,17 +51,17 @@ public abstract class TerpProgram
     public abstract CompoundTag toNBT();
 
     public static TerpProgram fromNBT(String programName, CompoundTag tag) {
-        String type = tag.getString(TYPE);
+        String type = tag.getString(TYPE).get();
         LOGGER.debug("savedata loading type {}", type);
         if (!type.equals(PARALLEL) && !type.equals(SERIAL)){
             LOGGER.error("Unknown TerpProgram type: "+type);
             throw new IllegalStateException("Unknown TerpProgram type: "+type);
         }
-        String description = tag.getString(DESCRIPTION);
+        String description = tag.getString(DESCRIPTION).get();
         LOGGER.debug("savedata loading description {}", description);
 
         if (type.equals(PARALLEL)) {
-            ListTag outerList = tag.getList(THREADS, Tag.TAG_LIST);
+            ListTag outerList = tag.getList(THREADS).get();
             List<List<Instruction>> instructions = new ArrayList<>();
             for (int i = 0; i < outerList.size(); i++) {
                 ListTag innerList = (ListTag) outerList.get(i);
@@ -71,8 +71,8 @@ public abstract class TerpProgram
             }
             return new ParallelTerpProgram(programName, description, instructions);
         } else {
-            ListTag instructionList = tag.getList(INSTRUCTIONS, Tag.TAG_COMPOUND);
-            LOGGER.trace("instructionList tag {} {} {}", instructionList.getAsString(), instructionList.toString(), instructionList.size());
+            ListTag instructionList = tag.getList(INSTRUCTIONS).get();
+            LOGGER.trace("instructionList tag {} {}", instructionList.toString(), instructionList.size());
             List<Instruction> instructions = readFromTag(instructionList);
             LOGGER.trace("serial program just read {} instructions", instructions.size());
             return new SerialTerpProgram(programName, description, instructions);
