@@ -32,10 +32,15 @@ public class TerpCommand
     private static Map<UUID, TerpTurtle> terpMap = new HashMap<>();
     private static Map<UUID, Map<UUID, TerpTurtle>> threadMap = new HashMap<>();
 
+    private static boolean hasPermission(CommandSourceStack source, int permissionLevel) {
+        //return source.m_81369_(permissionLevel);
+        return source.hasPermission(permissionLevel);
+    }
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("terp")
-                .requires(source -> source.hasPermission(0))
+                .requires(source -> hasPermission(source, 0))
                 .then(Commands.literal("summon")
                     .executes(ctx -> summonTerp(ctx.getSource())))
                 .then(Commands.literal("run")
@@ -56,7 +61,7 @@ public class TerpCommand
         );
         // manual movement commands
         LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal("terp")
-            .requires(source -> source.hasPermission(0));
+            .requires(source -> hasPermission(source, 0));
 
         for (String action : List.of("forward", "back",
              "up", "down", "left", "right", 
@@ -70,7 +75,7 @@ public class TerpCommand
         //TODO: restrict to ops only
         dispatcher.register(
             Commands.literal("dumpblocks")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> hasPermission(source, 3))
                 .executes(ctx -> {
                 try {
                     tools.BlockDumper.dumpBlockModels(ctx.getSource().getLevel());
@@ -213,7 +218,7 @@ public class TerpCommand
 
     private static int runProgram(CommandSourceStack source, String programName) {
         ServerPlayer player = source.getPlayer();
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = source.getLevel();
 
         TerpTurtle terp = getMainTerp(player.getUUID());
         
@@ -289,7 +294,7 @@ public class TerpCommand
 
     private static int listPrograms(CommandSourceStack source) {
         ServerPlayer player = source.getPlayer();
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = source.getLevel();
         TerpProgramData data = TerpProgramData.get(level);
 
         String playerName = player.getGameProfile().getName();

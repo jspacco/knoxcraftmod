@@ -8,7 +8,7 @@ import edu.knox.knoxcraftmod.KnoxcraftMod;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = KnoxcraftMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -36,27 +36,27 @@ public class SpawnHandler {
 
     
     @SubscribeEvent
-    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+    public static boolean onEntityJoinLevel(EntityJoinLevelEvent event) {
 
         // Only enforce on the server; vanilla clients never run this mod.
-        if (event.getLevel().isClientSide()) return;
+        if (event.getLevel().isClientSide()) return false;
 
         var e = event.getEntity();
 
         // Let players through
-        if (e instanceof Player) return;
+        if (e instanceof Player) return false;
 
         // Allow turtles so vanilla clients can see "Terps" 
         // (which spawn as a vanilla turtle on client).
         if (e.getType() == net.minecraft.world.entity.EntityType.TURTLE) {
             LOGGER.debug("allowing spawn of turtle {}", e);
-            return;
+            return false;
         }
 
         LOGGER.debug("Canceling spawn of {}", e.getClass());
 
         // Block other mobs.
-        event.setCanceled(true);
+        return true;
     }
 }
 

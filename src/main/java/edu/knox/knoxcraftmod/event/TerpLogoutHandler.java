@@ -6,7 +6,7 @@ import com.mojang.logging.LogUtils;
 import edu.knox.knoxcraftmod.KnoxcraftMod;
 import edu.knox.knoxcraftmod.command.TerpCommand;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.server.level.ServerPlayer;
 

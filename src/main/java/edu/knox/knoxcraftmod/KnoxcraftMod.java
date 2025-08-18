@@ -9,14 +9,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import java.io.IOException;
@@ -39,22 +36,12 @@ public class KnoxcraftMod
     // use constructor injection
     public KnoxcraftMod(final FMLJavaModLoadingContext context)
     {
-        IEventBus modEventBus = context.getModEventBus();   // no .get()
-        modEventBus.addListener(this::commonSetup);
-
         // Forge config registration (not ModContainer)
         context.registerConfig(ModConfig.Type.COMMON, KnoxcraftConfig.COMMON_CONFIG);
 
         // Global Forge event bus
         MinecraftForge.EVENT_BUS.register(this);
     }
-
-    private void commonSetup(final FMLCommonSetupEvent event)
-    {
-        // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");
-    }
-
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
     @SubscribeEvent
@@ -92,7 +79,7 @@ public class KnoxcraftMod
     }
 
     @SubscribeEvent
-    public static <FMLServerStoppingEvent> void onServerStopping(FMLServerStoppingEvent event) {
+    public static <FMLServerStoppingEvent> void onServerStopping(ServerStoppingEvent event) {
         HttpServerManager.stop();
     }
 

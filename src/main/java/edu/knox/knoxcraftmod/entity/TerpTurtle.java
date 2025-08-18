@@ -10,12 +10,14 @@ import com.mojang.logging.LogUtils;
 import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.TerpCommand;
+import edu.knox.knoxcraftmod.event.TerpInvulnerabilityHandlers;
+import edu.knox.knoxcraftmod.util.ValueIO;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -27,6 +29,8 @@ import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.animal.Turtle;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 public class TerpTurtle extends Turtle {
@@ -37,6 +41,7 @@ public class TerpTurtle extends Turtle {
         // terps can fly
         this.setNoGravity(true);
         this.setInvulnerable(true);
+        this.addTag(TERP_INVUL);
         this.lookControl = new LookControl(this) {
             @Override
             public void tick() {
@@ -48,6 +53,7 @@ public class TerpTurtle extends Turtle {
     private static final int SUPERFLAT_GROUND_LEVEL = -60;
     private final int MAX_Y;
     private static final String SET_BLOCK = "setBlock";
+    private static final String TERP_INVUL = "terp_invul";
 
     private static final Logger LOGGER = LogUtils.getLogger();
     
@@ -74,21 +80,11 @@ public class TerpTurtle extends Turtle {
     public void setTerpDirection(Direction newDirection) {
         if (this.direction != newDirection) {
             this.direction = newDirection;
-            float yaw = yawFromDirection(newDirection);
+            float yaw = newDirection.toYaw();
             this.setYRot(yaw);
             this.setYHeadRot(yaw);
             this.setYBodyRot(yaw);
         }
-    }
-
-    private float yawFromDirection(Direction dir) {
-        return switch (dir) {
-            case NORTH -> 180f;
-            case EAST -> -90f;
-            case SOUTH -> 0f;
-            case WEST -> 90f;
-            default -> 0f;
-        };
     }
 
     public Direction getTerpDirection() {
@@ -107,16 +103,11 @@ public class TerpTurtle extends Turtle {
     public void tick() {
         super.tick();
 
-        this.setGlowingTag(true);
-        if (this.level().isClientSide && this.tickCount % 20 == 0) {
-            LOGGER.debug("Turtle (client) tick at " + this.getX() + " " + this.getY() + " " + this.getZ());
-        }
-        if (this.level().isClientSide && this.tickCount % 40 == 0) {
-            LOGGER.debug("Entity class: " + this.getClass().getName());
-        }
-
         if (this.level().isClientSide) return;
 
+        this.setGlowingTag(true);
+        this.setInvulnerable(true);
+        
 
         if (!level().isClientSide) {
             // Server sets Y rotation
@@ -245,35 +236,19 @@ public class TerpTurtle extends Turtle {
         return this.ownerUUID;
     }
 
-    // Save and load the Terp
-    // We know the UUID because this requires the person to be logged in
+
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
+    public void addAdditionalSaveData(ValueOutput out) {
+        super.addAdditionalSaveData(out);
         if (ownerUUID != null) {
-            saveUUID(ownerUUID, tag, "owner");
+            ValueIO.store(out, "owner", UUIDUtil.CODEC, this.ownerUUID);
         }
-    }
-
-    // the NBT api seems to have changed between 1.21.1 and 1.21.5
-    // we've lost get/save UUID method, and I guess we get back Optional<T> now?
-    // I'm abstracting away save/load UUID into static methods
-    // these hopefully will act as shims in case the API changes again
-    private static void saveUUID(UUID uuid, CompoundTag tag, String key) {
-        tag.putString(key, uuid.toString());
-    }
-
-    private static UUID loadUUID(CompoundTag tag, String key) {
-        if (tag.contains(key)) {
-            return UUID.fromString(tag.getString(key).get());
-        }
-        return null;
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        ownerUUID = loadUUID(tag, "owner");
+    public void readAdditionalSaveData(ValueInput in) {
+        super.readAdditionalSaveData(in);
+        ValueIO.read(in, "owner", UUIDUtil.CODEC);
     }
 
     @Override
@@ -281,8 +256,7 @@ public class TerpTurtle extends Turtle {
         return false;
     }
 
-
-    // change visibility
+    // why is this here?
     @Override
     public void setRot(float pYRot, float pXRot) {
         super.setRot(pYRot, pXRot);

@@ -10,7 +10,7 @@ import edu.knox.knoxcraftmod.KnoxcraftMod;
 import edu.knox.knoxcraftmod.entity.TerpTurtle;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Turtle;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
