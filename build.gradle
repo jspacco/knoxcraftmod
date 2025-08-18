@@ -50,6 +50,7 @@ minecraft {
         // applies to all the run configs below
         configureEach {
             workingDirectory project.file('run')
+            property 'eventbus.api.strictRuntimeChecks', 'true'
 
             // Recommended logging data for a userdev environment
             // The markers can be added/remove as needed separated by commas.
@@ -140,6 +141,7 @@ dependencies {
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
     // TOMLj
     implementation 'org.tomlj:tomlj:1.0.0'
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0-beta.11' // match your Forge’s eventbus version
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

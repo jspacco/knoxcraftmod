@@ -10,7 +10,6 @@ import com.mojang.logging.LogUtils;
 import edu.knox.knoxcraftmod.command.Direction;
 import edu.knox.knoxcraftmod.command.Instruction;
 import edu.knox.knoxcraftmod.command.TerpCommand;
-import edu.knox.knoxcraftmod.event.TerpInvulnerabilityHandlers;
 import edu.knox.knoxcraftmod.util.ValueIO;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;

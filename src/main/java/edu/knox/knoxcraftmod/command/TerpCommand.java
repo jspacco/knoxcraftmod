@@ -24,7 +24,6 @@ import net.minecraft.world.entity.EntityType;
 import edu.knox.knoxcraftmod.entity.TerpTurtle;
 import edu.knox.knoxcraftmod.util.Msg;
 import edu.knox.knoxcraftmod.data.TerpProgramData;
-import net.minecraft.network.chat.Component;
 
 public class TerpCommand 
 {
