@@ -263,7 +263,7 @@ build.dependsOn shadowJar
 // Define a custom Jar task for the student lib jar
 task clientJar(type: Jar) {
     group = 'build'
-    description = 'Builds a JAR with just the client code for students, excluding ToroClientExample and other files ending in Example'
+    description = 'Builds a JAR with just the client code for students, excluding the example package'
 
     archiveBaseName = 'knoxcraft-client'
     destinationDirectory = file("$studentProjectDir/lib")
@@ -274,7 +274,7 @@ task clientJar(type: Jar) {
     include 'edu/knox/knoxcraftmod/client/**'
 
     // Exclude the example class
-    exclude 'edu/knox/knoxcraftmod/client/*Example.class'
+    exclude 'edu/knox/knoxcraftmod/client/example/**'
 }
 
 
@@ -291,7 +291,7 @@ task prepareStudentProject {
         libDir.mkdirs()
 
         def javaFiles = fileTree('src/main/java') {
-            include 'edu/knox/knoxcraftmod/client/*Example.java'
+            include 'edu/knox/knoxcraftmod/client/example/*.java'
         }
 
         javaFiles.each { file ->
