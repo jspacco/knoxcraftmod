@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -32,7 +33,6 @@ public class TerpCommand
     private static Map<UUID, Map<UUID, TerpTurtle>> threadMap = new HashMap<>();
 
     private static boolean hasPermission(CommandSourceStack source, int permissionLevel) {
-        //return source.m_81369_(permissionLevel);
         return source.hasPermission(permissionLevel);
     }
 
@@ -55,7 +55,7 @@ public class TerpCommand
                     Msg.reply(ctx.getSource(), 
                         "Terp Commands:\n/terp summon\n/terp list\n/terp stop\n/terp help\n/terp forward|back|up|down|left|right\n/terp run <program>", 
                         false);
-                    return 1;
+                    return Command.SINGLE_SUCCESS;
                 }))
         );
         // manual movement commands
@@ -72,22 +72,22 @@ public class TerpCommand
         dispatcher.register(base);
 
         //TODO: restrict to ops only
-        dispatcher.register(
-            Commands.literal("dumpblocks")
-                .requires(source -> hasPermission(source, 3))
-                .executes(ctx -> {
-                try {
-                    tools.BlockDumper.dumpBlockModels(ctx.getSource().getLevel());
-                } catch (Exception e) {
-                    Msg.fail(ctx.getSource(), "failure! " +e.toString());
-                    return 0;
-                }
+        // dispatcher.register(
+        //     Commands.literal("dumpblocks")
+        //         .requires(source -> hasPermission(source, 4))
+        //         .executes(ctx -> {
+        //         try {
+        //             tools.BlockDumper.dumpBlockModels(ctx.getSource().getLevel());
+        //         } catch (Exception e) {
+        //             Msg.fail(ctx.getSource(), "failure! " +e.toString());
+        //             return 0;
+        //         }
                 
-                Msg.reply(ctx.getSource(), "Success", false);
-                //ctx.getSource().sendSuccess(() -> Component.literal("Success"), false);
-                return 1;
-            }
-        ));
+        //         Msg.reply(ctx.getSource(), "Success", false);
+        //         //ctx.getSource().sendSuccess(() -> Component.literal("Success"), false);
+        //         return 1;
+        //     }
+        // ));
     }
 
     private static int manualMove(CommandContext<CommandSourceStack> ctx, String action) {
@@ -109,7 +109,7 @@ public class TerpCommand
         terp.moveTerp(action);
 
         Msg.reply(ctx.getSource(), "Terp moved: " + action, false);
-        return 1;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static boolean isRunning(UUID playerId) {
@@ -136,7 +136,7 @@ public class TerpCommand
         }
         moveTerpToEntity(terp, player);
         Msg.send(player, "Terp Summoned. ", true);
-        return 1;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int stopTerp(CommandSourceStack source)
@@ -163,7 +163,7 @@ public class TerpCommand
         }
 
         Msg.send(player, "Terp stopped.", true);
-        return 1;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static TerpTurtle getOrCreateTerp(ServerPlayer player, ServerLevel level)
@@ -263,7 +263,7 @@ public class TerpCommand
         }
 
         Msg.send(player, format("Program %s loaded.", programName), false);
-        return 1;
+        return Command.SINGLE_SUCCESS;
     }
 
     private static TerpTurtle spawnTerpThread(ServerPlayer player, ServerLevel level, Entity entity) {
@@ -310,7 +310,7 @@ public class TerpCommand
             Msg.send(player, "-> " + name +": "+map.get(name).getDescription(), false);
         }
 
-        return 1;
+        return Command.SINGLE_SUCCESS;
     }
 
     public static void removeTerpMapping(UUID uuid) {
