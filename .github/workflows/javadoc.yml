@@ -29,21 +29,8 @@ jobs:
           mkdir -p site/javadoc
           # Copy Javadoc
           cp -R build/docs/javadoc/* site/javadoc/
-          # Landing page (commit one or generate it)
-          if [ -f docs/site/index.html ]; then
-            cp docs/site/index.html site/index.html
-          else
-            cat > site/index.html <<'HTML'
-            <!doctype html><meta charset="utf-8">
-            <title>Knoxcraft Mod (1.21.8)</title>
-            <h1>Knoxcraft Mod (1.21.8)</h1>
-            <p>Programmable <em>Terp</em> turtle, block tools, and docs.</p>
-            <ul>
-              <li><a href="./javadoc/">API Javadoc</a> (includes <code>TerpBlockType</code> images)</li>
-              <li><a href="https://github.com/jspacco/knoxcraftmod">GitHub repo</a></li>
-            </ul>
-            HTML
-          fi
+          # Landing page
+          cp docs/site/index.html site/index.html
           # Ensure GitHub Pages doesn't Jekyll-process underscores
           touch site/.nojekyll
 
