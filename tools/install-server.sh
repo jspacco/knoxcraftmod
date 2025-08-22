@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#set -euo pipefail
+set -euo pipefail
 
 INSTALLER="$1"
 MOD_FILE="$2"
