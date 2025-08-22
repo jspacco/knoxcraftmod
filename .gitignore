@@ -25,7 +25,9 @@ run
 forge*changelog.txt
 
 TODO.md
-.DS_Store
+*.DS_Store
 tmp*
 ztmp*
 OUT
+**/venv
+**/__pycache__

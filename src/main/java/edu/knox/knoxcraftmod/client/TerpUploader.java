@@ -91,7 +91,7 @@ public class TerpUploader
         String username, String password)
     {
         HttpClient client = HttpClient.newHttpClient();
-        System.out.println(json);
+        //System.out.println(json);
         // Send the POST request to the server
         // Handle the response and any errors
         // sending username and password as custom headers

@@ -101,8 +101,9 @@ public class HttpServerManager {
             }
             TerpProgram program = null;
             if (type.equals("serial")) {
-                program = GSON.fromJson(
-                    new InputStreamReader(exchange.getRequestBody()), SerialTerpProgram.class);
+                String payload = new String(exchange.getRequestBody().readAllBytes());
+                LOGGER.debug("Serial program JSON payload: {}", payload);
+                program = GSON.fromJson(payload, SerialTerpProgram.class);
                 LOGGER.trace("Serial Program uploaded: {}", program);
                 // add the program with the username
             } else if (type.equals("parallel")) {

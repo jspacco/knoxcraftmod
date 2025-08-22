@@ -1,9 +1,12 @@
-# /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 nbtprint.py > OUT
 import nbtlib
 import json
+import sys
 
-nbt = nbtlib.load('run/saves/New World/data/toro.dat')
-#print(nbt)
+if len(sys.argv) < 2:
+    print("Usage: python nbtprint.py <nbt_file>")
+    sys.exit(1)
+
+nbt = nbtlib.load(sys.argv[1])
 
 json_data = json.dumps(nbt, indent=2)
 
