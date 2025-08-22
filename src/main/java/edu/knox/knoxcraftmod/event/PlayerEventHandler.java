@@ -90,8 +90,8 @@ public class PlayerEventHandler {
     public static boolean onLeftClickBlock(PlayerInteractEvent.LeftClickBlock e) {
         Player p = e.getEntity();
         if (p != null && p.hasPermissions(4)) return false;
-        Msg.send(p, "Trying to cancel block breaking.", true);
-        return true; // cancel
+        Msg.send(p, "Manual block breaking disabled.", true);
+        return true;
     }
 
 }
