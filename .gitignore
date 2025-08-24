@@ -31,3 +31,5 @@ ztmp*
 OUT
 **/venv
 **/__pycache__
+**/dist
+**/*egg-info

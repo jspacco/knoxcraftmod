@@ -2,8 +2,6 @@ import json
 import requests
 from enum import Enum
 
-from TerpBlockType import TerpBlockType
-
 class Terp:
     CMD = "command"
 
@@ -36,7 +34,7 @@ class Terp:
     def turn_right(self):
         self._add_instruction({Terp.CMD: "turnright"})
     
-    def set_block(self, block_type: TerpBlockType):
+    def set_block(self, block_type):
         self._add_instruction({
             Terp.CMD: "setBlock",
             "blockType": block_type.value

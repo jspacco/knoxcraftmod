@@ -1,6 +1,11 @@
 import re
 
 def main():
+    """
+    Generate the TerpBlockType enum from the types-1.21.8.txt file.
+    The output is printed to standard out and can be redirected to
+    a file. Right now that's the bottom of knoxcraft/terp.py file.
+    """
     print('''from enum import Enum
 
 class TerpBlockType(Enum):
