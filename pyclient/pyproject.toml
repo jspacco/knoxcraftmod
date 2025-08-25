@@ -1,8 +1,9 @@
 [project]
 name = "knoxcraft"
-version = "0.0.1"
-description = "Python client code for Knoxcraft Mod. Basically 3D Logo for Minecraft."
+version = "0.0.2a1"
+description = "Python client code for Knoxcraft Mod. Basically 3D Logo for Minecraft, with parallelism."
 requires-python = ">=3.8"
+readme = "README.md"
 license = {text = "MIT"}
 authors = [{name = "Jaime Spacco"}]
 dependencies = [

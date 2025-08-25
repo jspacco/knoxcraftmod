@@ -23,7 +23,7 @@ def main():
         t.right()
         t.up()
     
-    response = t.upload(url, minecraftPlayername, username, password)
+    response = t.upload(t, url, minecraftPlayername, username, password)
     print(response)
 
 if __name__ == "__main__":
