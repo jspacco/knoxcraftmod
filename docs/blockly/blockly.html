@@ -1,0 +1,412 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Knoxcraft Blockly → JSON (Start + 6 directions + setBlock + unrolled repeat with aliases)</title>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <link rel="stylesheet" href="blockly.css" />
+</head>
+<body>
+<div id="app">
+  <div id="blocklyDiv"></div>
+
+  <div id="side">
+    <div>
+      <label for="programName">Program name</label>
+      <input id="programName" type="text" placeholder="my-first-program" value="student-program-01"/>
+    </div>
+
+    <div>
+      <label for="description">Description</label>
+      <input id="description" type="text" placeholder="description" value="describe program"/>
+    </div>
+
+    <div>
+      <label for="minecraftPlayername">Minecraft Player Name</label>
+      <input id="minecraftPlayername" type="text" placeholder="minecraftPlayername" value="Spacdog"/>
+    </div>
+
+    <div>
+      <label for="username">Username (from your instructor)</label>
+      <input id="username" type="text" placeholder="username" value="test"/>
+    </div>
+
+    <div>
+      <label for="password">Password (from your instructor)</label>
+      <input id="password" type="text" placeholder="password" value="foobar123"/>
+    </div>
+
+    <div>
+      <label for="serverUrl">Server URL</label>
+      <input id="serverUrl" type="text" value="http://localhost:8080/upload" />
+    </div>
+
+    <div class="row">
+      <button id="btnExport">Export JSON</button>
+      <button id="btnUpload">Upload</button>
+      <button id="btnClear">Clear workspace</button>
+      <button id="btnLoadSample">Load sample</button>
+    </div>
+
+    <textarea id="jsonOut" placeholder='Your JSON will appear here...'></textarea>
+
+    <div>
+      <label for="blockSearch">Search blocks</label>
+      <input id="blockSearch" type="text" placeholder="e.g., oak, stairs, glass" />
+    </div>
+    <div id="blockResults" style="height:180px; overflow:auto; border:1px solid #ddd; border-radius:6px; padding:6px; font-family: ui-sans-serif; font-size: 14px;"></div>
+  </div>
+</div>
+
+
+<!-- Toolbox -->
+<xml id="toolbox" style="display:none">
+  <category name="Program" colour="#00897b">
+    <block type="start"></block>
+  </category>
+  <category name="Movement" colour="#7e57c2">
+    <block type="forward"></block>
+    <block type="back"></block>
+    <block type="left"></block>
+    <block type="right"></block>
+    <block type="up"></block>
+    <block type="down"></block>
+    <block type="turnleft"></block>
+    <block type="turnright"></block>
+  </category>
+  <category name="Blocks" colour="#f9a825">
+    <block type="setBlock"></block>
+  </category>
+  <category name="Control" colour="#42a5f5">
+    <block type="repeat">
+      <value name="COUNT"><shadow type="math_number"><field name="NUM">4</field></shadow></value>
+    </block>
+  </category>
+  <category name="Math" categorystyle="math_category"></category>
+</xml>
+
+<script>
+  let BLOCK_ALIASES = {};
+
+  // Just load blockAliases.json directly (must be in the same folder)
+  fetch('blockAliases.json')
+    .then(res => res.json())
+    .then(obj => {
+      BLOCK_ALIASES = obj;
+      renderBlockResults(Object.keys(BLOCK_ALIASES).slice(0,300));
+    })
+    .catch(err => {
+      console.error('Failed to load blockAliases.json', err);
+      BLOCK_ALIASES = {"Stone": "minecraft:stone"};
+      renderBlockResults(Object.keys(BLOCK_ALIASES));
+    });
+
+  function ALL_ALIASES() {
+    return Object.keys(BLOCK_ALIASES);
+  }
+
+  const workspace = Blockly.inject('blocklyDiv', {
+    toolbox: document.getElementById('toolbox'),
+    scrollbars: true,
+    trashcan: true,
+    renderer: 'geras',
+  });
+
+  function makeCommandBlock(type, label, commandName) {
+    Blockly.Blocks[type] = {
+      init: function() {
+        this.appendDummyInput().appendField(label);
+        this.setPreviousStatement(true); this.setNextStatement(true);
+        this.setColour(130);
+        this.setTooltip(commandName);
+      }
+    };
+  }
+
+  // Enforce only one start block
+  Blockly.Blocks['start'] = {
+    init: function() {
+      this.appendDummyInput().appendField('start');
+      this.appendStatementInput('DO').appendField('do');
+      this.setNextStatement(false);
+      this.setPreviousStatement(false);
+      this.setColour(180);
+      this.setTooltip('Program entry point. Put your steps inside.');
+      this.setDeletable(true);
+    },
+    onchange: function(e) {
+      if (!this.workspace) return;
+      const allStarts = this.workspace.getAllBlocks().filter(b => b.type === 'start');
+      if (allStarts.length > 1) {
+        // keep the first, delete any new ones
+        for (let i = 1; i < allStarts.length; i++) {
+          allStarts[i].dispose(true);
+        }
+        alert("Only one start block is allowed.");
+      }
+    }
+  };
+
+  makeCommandBlock('forward',   'forward',  'forward');
+  makeCommandBlock('back',      'back',     'back');
+  makeCommandBlock('left',      'left',     'left');
+  makeCommandBlock('right',     'right',    'right');
+  makeCommandBlock('up',        'up',       'up');
+  makeCommandBlock('down',      'down',     'down');
+  makeCommandBlock('turnleft',  'turnleft', 'turnleft');
+  makeCommandBlock('turnright', 'turnright','turnright');
+
+  let lastFocusedPlaceField = null;
+  Blockly.Blocks['setBlock'] = {
+    init: function() {
+      this.appendDummyInput()
+        .appendField('setBlock')
+        .appendField(new Blockly.FieldTextInput('DIRT', (v) => {
+          if (!v || v.trim() === '') return v;
+          return BLOCK_ALIASES[v] ? v : null;
+        }), 'BLOCK_ALIAS');
+      this.setPreviousStatement(true); this.setNextStatement(true);
+      this.setColour(40);
+      this.setTooltip('Place a block by alias, e.g., DIRT');
+    },
+    onchange: function(e) {
+      if (e.type === Blockly.Events.SELECTED && e.newElementId === this.id) {
+        lastFocusedPlaceField = this.getField('BLOCK_ALIAS');
+      }
+    }
+  };
+
+  Blockly.Blocks['repeat'] = {
+    init: function() {
+      this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');
+      this.appendStatementInput('DO').appendField('do');
+      this.setPreviousStatement(true); this.setNextStatement(true);
+      this.setColour(210);
+      this.setTooltip('Repeat the enclosed actions N times (unrolled).');
+    }
+  };
+
+  function cmd(name) { return { command: name }; }
+
+  function blockToJSONArray(block) {
+    switch (block.type) {
+      case 'forward': return [cmd('forward')];
+      case 'back':    return [cmd('back')];
+      case 'left':    return [cmd('left')];
+      case 'right':   return [cmd('right')];
+      case 'up':      return [cmd('up')];
+      case 'down':    return [cmd('down')];
+      case 'turnleft':    return [cmd('turnleft')];
+      case 'turnright':   return [cmd('turnright')];
+      case 'setBlock': {
+        const alias = block.getFieldValue('BLOCK_ALIAS') || 'DIRT';
+        const id = BLOCK_ALIASES[alias] || alias;
+        return [{ command: 'setBlock', blockType: id }];
+      }
+      case 'repeat': {
+        const countBlock = block.getInputTargetBlock('COUNT');
+        let count = 1;
+        if (countBlock) {
+          const code = Blockly.JavaScript.blockToCode(countBlock);
+          const parsed = Number(String(code).match(/-?\d+(?:\.\d+)?/)?.[0] ?? '1');
+          count = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+        }
+        const bodyOnce = [];
+        for (let b = block.getInputTargetBlock('DO'); b; b = b.getNextBlock()) {
+          bodyOnce.push(...blockToJSONArray(b));
+        }
+        const out = [];
+        for (let i = 0; i < count; i++) {
+          out.push(...JSON.parse(JSON.stringify(bodyOnce)));
+        }
+        return out;
+      }
+      default:
+        return [];
+    }
+  }
+
+  function linearizeStack(block) {
+    const out = [];
+    for (let b = block; b; b = b.getNextBlock()) {
+      out.push(...blockToJSONArray(b));
+    }
+    return out;
+  }
+
+  function collectFromStartBlocks() {
+    const topBlocks = workspace.getTopBlocks(true);
+    const instructions = [];
+    const startBlocks = topBlocks.filter(b => b.type === 'start');
+    if (startBlocks.length) {
+      for (const sb of startBlocks) {
+        for (let b = sb.getInputTargetBlock('DO'); b; b = b.getNextBlock()) {
+          instructions.push(...blockToJSONArray(b));
+        }
+      }
+    } else {
+      for (const tb of topBlocks) instructions.push(...linearizeStack(tb));
+    }
+    return instructions;
+  }
+
+  function generateProgramJSON() {
+    const programName = document.getElementById('programName').value || 'untitled';
+    const description = document.getElementById('description').value || '';
+    const type = 'serial';
+    const instructions = collectFromStartBlocks();
+    return { programName, description, type, instructions };
+  }
+
+  const resultsBox = document.getElementById('blockResults');
+  function renderBlockResults(list) {
+    resultsBox.innerHTML = '';
+    if (!list.length) { resultsBox.textContent = 'No matches.'; return; }
+    const frag = document.createDocumentFragment();
+    list.forEach(alias => {
+      const div = document.createElement('div');
+      div.textContent = alias;
+      div.addEventListener('click', () => {
+        if (lastFocusedPlaceField) {
+          lastFocusedPlaceField.setValue(alias);
+        } else {
+          alert("Click a 'setBlock' block to focus it, then choose a block here.");
+        }
+      });
+      frag.appendChild(div);
+    });
+    resultsBox.appendChild(frag);
+  }
+
+  const searchEl = document.getElementById('blockSearch');
+  let searchTimer = null;
+  function runSearch() {
+    const q = searchEl.value.trim().toLowerCase();
+    if (!q) { renderBlockResults(ALL_ALIASES().slice(0, 300)); return; }
+    const starts = [], contains = [];
+    for (const alias of ALL_ALIASES()) {
+      const la = alias.toLowerCase();
+      if (la.startsWith(q)) starts.push(alias);
+      else if (la.includes(q)) contains.push(alias);
+      if (starts.length + contains.length >= 600) break;
+    }
+    renderBlockResults([...starts, ...contains]);
+  }
+  searchEl.addEventListener('input', () => {
+    if (searchTimer) cancelAnimationFrame(searchTimer);
+    searchTimer = requestAnimationFrame(runSearch);
+  });
+  renderBlockResults(ALL_ALIASES().slice(0, 300));
+
+  const out = document.getElementById('jsonOut');
+
+  document.getElementById('btnExport').addEventListener('click', () => {
+    const data = generateProgramJSON();
+    out.value = JSON.stringify(data, null, 2);
+  });
+
+  document.getElementById('btnUpload').addEventListener('click', async () => {
+    const url = document.getElementById('serverUrl').value.trim();
+    const payload = generateProgramJSON();
+    out.value = JSON.stringify(payload, null, 2);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json',
+                  'X-Username': document.getElementById('username').value.trim(),
+                  'X-Password': document.getElementById('password').value.trim(),
+                  'X-MinecraftPlayername': document.getElementById('minecraftPlayername').value.trim(),
+                  'X-Type': 'serial'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        alert(`Upload failed: ${res.status} ${res.statusText}\n${text}`);
+      } else {
+        const text = await res.text().catch(() => '');
+        alert(`Uploaded OK!\n${text || '(no response body)'}`);
+      }
+    } catch (e) {
+      alert(`Network error: ${e.message}`);
+    }
+  });
+
+  document.getElementById('btnClear').addEventListener('click', () => {
+    workspace.clear(); out.value = '';
+  });
+
+  // Simple debounce helper
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  // Save workspace to localStorage
+  function saveWorkspace() {
+    const state = Blockly.serialization.workspaces.save(workspace);
+    localStorage.setItem('knoxcraftBlocklyWorkspace', JSON.stringify(state));
+    console.log("Workspace saved");
+  }
+
+
+  // Debounced version (wait 500ms after last change)
+  const debouncedSave = debounce(saveWorkspace, 500);
+
+  // Attach once
+  workspace.addChangeListener(debouncedSave);
+
+  window.addEventListener('load', () => {
+    const saved = localStorage.getItem('knoxcraftBlocklyWorkspace');
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        Blockly.serialization.workspaces.load(state, workspace);
+      } catch (e) {
+        console.error('Failed to restore workspace (JSON):', e);
+      }
+    }
+  });
+
+
+
+  document.getElementById('btnLoadSample').addEventListener('click', () => {
+    const xmlText = `
+      <xml xmlns="https://developers.google.com/blockly/xml">
+        <block type="start" x="30" y="30">
+          <statement name="DO">
+            <block type="repeat">
+              <value name="COUNT"><shadow type="math_number"><field name="NUM">4</field></shadow></value>
+              <statement name="DO">
+                <block type="forward">
+                  <next>
+                    <block type="setBlock">
+                      <field name="BLOCK_ALIAS">DIRT</field>
+                      <next>
+                        <block type="right">
+                          <next>
+                            <block type="up">
+                              <next>
+                                <block type="down"></block>
+                              </next>
+                            </block>
+                          </next>
+                        </block>
+                      </next>
+                    </block>
+                  </next>
+                </block>
+              </statement>
+            </block>
+          </statement>
+        </block>
+      </xml>`;
+    workspace.clear();
+    Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xmlText), workspace);
+  });
+</script>
+</body>
+</html>

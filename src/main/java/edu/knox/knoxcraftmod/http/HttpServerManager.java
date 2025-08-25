@@ -36,6 +36,20 @@ public class HttpServerManager {
     // will be read from PasswordConfig
     private static Map<String, String> USER_CREDENTIALS;
 
+    private static final String ALLOWED_ORIGIN = "http://localhost:8000"; // your Blockly page origin
+
+    private static void addCORS(HttpExchange exchange) {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+        exchange.getResponseHeaders().add("Vary", "Origin");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers",
+            "Content-Type, X-Username, X-Password, X-MinecraftPlayername, X-Type");
+        exchange.getResponseHeaders().add("Access-Control-Max-Age", "600");
+        // If you ever use cookies/Authorization bearer and need credentials:
+        // exchange.getResponseHeaders().add("Access-Control-Allow-Credentials", "true");
+    }
+
+
     public static void start(MinecraftServer server) throws Exception 
     {
         PORT = KnoxcraftConfig.HTTP_PORT;
@@ -68,6 +82,15 @@ public class HttpServerManager {
 
     private static void handleUpload(HttpExchange exchange, MinecraftServer server) {
         try {
+
+            // Preflight: reply early
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                addCORS(exchange);
+                exchange.sendResponseHeaders(204, -1); // no body
+                exchange.close();
+                return;
+            }
+
             if (!"POST".equals(exchange.getRequestMethod())) {
                 // Method Not Allowed
                 exchange.sendResponseHeaders(405, -1);
@@ -122,6 +145,7 @@ public class HttpServerManager {
 
     private static void send(HttpExchange exchange, int code, String message) {
         try {
+            addCORS(exchange);
             byte[] bytes = message.getBytes();
             exchange.sendResponseHeaders(code, bytes.length);
             OutputStream os = exchange.getResponseBody();
