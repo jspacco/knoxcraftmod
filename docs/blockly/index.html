@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Knoxcraft Blockly → JSON (Start + 6 directions + setBlock + unrolled repeat with aliases)</title>
+  <title>Knoxcraft Blockly → JSON (Popup Block Search)</title>
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <link rel="stylesheet" href="blockly.css" />
 </head>
@@ -54,14 +54,8 @@
 
     <textarea id="jsonOut" placeholder='Your JSON will appear here...'></textarea>
 
-    <div>
-      <label for="blockSearch">Search blocks</label>
-      <input id="blockSearch" type="text" placeholder="e.g., oak, stairs, glass" />
-    </div>
-    <div id="blockResults" style="height:180px; overflow:auto; border:1px solid #ddd; border-radius:6px; padding:6px; font-family: ui-sans-serif; font-size: 14px;"></div>
   </div>
 </div>
-
 
 <!-- Toolbox -->
 <xml id="toolbox" style="display:none">
@@ -81,51 +75,76 @@
   <category name="Blocks" colour="#f9a825">
     <block type="setBlock"></block>
   </category>
+  <category name="Logic" categorystyle="logic_category">
+    <block type="controls_if"></block>
+    <block type="logic_compare"></block>
+    <block type="logic_operation"></block>
+    <block type="logic_boolean"></block>
+    <block type="logic_negate"></block>
+  </category>
+  <category name="Variables" custom="VARIABLE" categorystyle="variable_category"></category>
+  <category name="Math" categorystyle="math_category">
+    <block type="math_number"><field name="NUM">4</field></block>
+    <block type="math_random_int">
+      <value name="FROM"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+      <value name="TO"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+    </block>
+    <block type="math_arithmetic"></block>
+    <block type="math_round"></block>
+  </category>
   <category name="Control" colour="#42a5f5">
     <block type="repeat">
       <value name="COUNT"><shadow type="math_number"><field name="NUM">4</field></shadow></value>
     </block>
   </category>
-  <category name="Math" categorystyle="math_category"></category>
 </xml>
+
+<!-- Popup dialog markup -->
+<dialog id="blockSearchDialog" aria-labelledby="blockSearchTitle">
+  <div class="modal-header">
+    <div class="modal-title" id="blockSearchTitle">Choose a block</div>
+    <button class="btn" id="closeDialogBtn" aria-label="Close">Close</button>
+  </div>
+  <div class="modal-body">
+    <div class="searchbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21 21l-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#8aa0b8" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="blockSearchInput" type="text" placeholder="Search (e.g., stone, stairs, glass)…" autocomplete="off" />
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="results" id="blockSearchResults" role="listbox" aria-label="Block search results"></div>
+  </div>
+  <div class="modal-footer">
+    <div><span id="resultCount">0</span> result(s)</div>
+    <button class="btn" id="insertFirstBtn">Insert first</button>
+  </div>
+</dialog>
 
 <script>
   let BLOCK_ALIASES = {};
 
-  // Just load blockAliases.json directly (must be in the same folder)
+  // Load blockAliases.json from same folder
   fetch('blockAliases.json')
     .then(res => res.json())
-    .then(obj => {
-      BLOCK_ALIASES = obj;
-      renderBlockResults(Object.keys(BLOCK_ALIASES).slice(0,300));
-    })
+    .then(obj => { BLOCK_ALIASES = obj; initAfterAliases(); })
     .catch(err => {
       console.error('Failed to load blockAliases.json', err);
       BLOCK_ALIASES = {"Stone": "minecraft:stone"};
-      renderBlockResults(Object.keys(BLOCK_ALIASES));
+      initAfterAliases();
     });
 
-  function ALL_ALIASES() {
-    return Object.keys(BLOCK_ALIASES);
-  }
+  function ALL_ALIASES() { return Object.keys(BLOCK_ALIASES); }
 
   function toggleThreads() {
     const mode = getRunMode();
-    const starts = getStartBlocks();
     if (mode === 'serial') {
-      // if serial, ensure only one start block
+      const starts = getStartBlocks();
       if (starts.length > 1) {
         alert("Serial mode only allows one 'start' block. Remove extra start blocks to continue.");
-        // switch button back to parallel
         document.querySelector('input[name="runMode"][value="parallel"]').checked = true;
       }
     }
   }
-
-  function getRunMode() {
-    return document.querySelector('input[name="runMode"]:checked')?.value || 'serial';
-  }
-
+  function getRunMode() { return document.querySelector('input[name="runMode"]:checked')?.value || 'serial'; }
 
   const workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox'),
@@ -135,328 +154,239 @@
   });
 
   function makeCommandBlock(type, label, commandName) {
-    Blockly.Blocks[type] = {
-      init: function() {
-        this.appendDummyInput().appendField(label);
-        this.setPreviousStatement(true); this.setNextStatement(true);
-        this.setColour(130);
-        this.setTooltip(commandName);
-      }
-    };
+    Blockly.Blocks[type] = { init: function() {
+      this.appendDummyInput().appendField(label);
+      this.setPreviousStatement(true); this.setNextStatement(true);
+      this.setColour(130); this.setTooltip(commandName);
+    }};
   }
 
-  Blockly.Blocks['start'] = {
-    init: function() {
-      this.appendDummyInput().appendField('start');
-      this.appendStatementInput('DO').appendField('do');
-      this.setPreviousStatement(false);
-      this.setNextStatement(false);
-      this.setColour(180);
-      this.setTooltip('Thread entry point.');
+  Blockly.Blocks['start'] = { init: function() {
+    this.appendDummyInput().appendField('start');
+    this.appendStatementInput('DO').appendField('do');
+    this.setPreviousStatement(false); this.setNextStatement(false);
+    this.setColour(180); this.setTooltip('Thread entry point.');
+  }};
+
+  makeCommandBlock('forward','forward','forward');
+  makeCommandBlock('back','back','back');
+  makeCommandBlock('left','left','left');
+  makeCommandBlock('right','right','right');
+  makeCommandBlock('up','up','up');
+  makeCommandBlock('down','down','down');
+  makeCommandBlock('turnleft','turnleft','turnleft');
+  makeCommandBlock('turnright','turnright','turnright');
+
+  // --- Popup plumbing -------------------------------------------------------
+  const dlg = document.getElementById('blockSearchDialog');
+  const dlgInput = document.getElementById('blockSearchInput');
+  const dlgResults = document.getElementById('blockSearchResults');
+  const dlgCount = document.getElementById('resultCount');
+  const dlgCloseBtn = document.getElementById('closeDialogBtn');
+  const dlgInsertFirstBtn = document.getElementById('insertFirstBtn');
+
+  let currentPopupField = null;       // Blockly.FieldTextInput for BLOCK_ALIAS
+  let currentHighlightBlock = null;   // block owning that field
+  let lastResults = [];
+
+  function openBlockSearch(initialQuery = '') {
+    if (!dlg.open) dlg.showModal();
+    dlgInput.value = initialQuery;
+    dlgInput.select();
+    refreshDialogResults();
+    setTimeout(() => dlgInput.focus(), 0);
+    // Visual highlight on the source block
+    if (currentHighlightBlock && currentHighlightBlock.setHighlighted) {
+      currentHighlightBlock.setHighlighted(true);
+    } else if (currentHighlightBlock && currentHighlightBlock.getColour) {
+      try {
+        currentHighlightBlock.__origColour = currentHighlightBlock.__origColour || currentHighlightBlock.getColour();
+        currentHighlightBlock.setColour('#7c3aed');
+      } catch(e){}
     }
-  };
+  }
+  function closeBlockSearch() {
+    if (dlg.open) dlg.close();
+    if (currentHighlightBlock && currentHighlightBlock.setHighlighted) {
+      currentHighlightBlock.setHighlighted(false);
+    } else if (currentHighlightBlock && currentHighlightBlock.__origColour) {
+      try { currentHighlightBlock.setColour(currentHighlightBlock.__origColour); } catch(e){}
+      currentHighlightBlock.__origColour = null;
+    }
+    if (currentPopupField) {
+      // Return focus to the block/field to keep keyboard flow nice
+      try { workspace.setSelected(currentPopupField.getSourceBlock()); } catch(e){}
+    }
+  }
 
+  function normalize(s){ return (s||'').toLowerCase().replace(/[_-]+/g,' ').trim(); }
+  function score(name,q){
+    if(!q) return 1e9 - Math.min(999, name.length);
+    const n=normalize(name), qq=normalize(q); if(!qq) return 1e9 - Math.min(999,n.length);
+    if(n===qq) return 0; if(n.startsWith(qq)) return 1; const i=n.indexOf(qq); if(i>=0) return 10+i;
+    const parts=qq.split(/\s+/g).filter(Boolean); let s=0, miss=0; for(const p of parts){ const k=n.indexOf(p); if(k>=0) s+=k; else miss++; }
+    return miss ? 1e6 : 100+s;
+  }
+  function refreshDialogResults(){
+    const q = dlgInput.value;
+    if (!q.trim()) { 
+      lastResults = ALL_ALIASES(); 
+      renderDialogResults(); 
+      return;
+    }
+    const items = ALL_ALIASES().map(n=>({n, s: score(n,q)})).filter(o=>o.s<1e6).sort((a,b)=>a.s-b.s).slice(0,150);
+    lastResults = items.map(o=>o.n);
+    renderDialogResults();
+  }
+  function renderDialogResults(){
+    dlgResults.innerHTML = '';
+    dlgCount.textContent = String(lastResults.length);
+    if(!lastResults.length){ const d=document.createElement('div'); d.className='empty'; d.textContent='No matches'; dlgResults.appendChild(d); return; }
+    for(const alias of lastResults){
+      const row = document.createElement('div'); row.className='item';
+      const left = document.createElement('div');
+      const title = document.createElement('strong'); title.textContent = alias; left.appendChild(title);
+      const badge = document.createElement('span'); badge.className='badge'; badge.textContent = ' · ' + (alias.split('_')[0]||''); left.appendChild(badge);
+      const right = document.createElement('div');
+      const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Use';
+      btn.addEventListener('click',()=>{ if(currentPopupField){ currentPopupField.setValue(alias); } closeBlockSearch(); });
+      right.appendChild(btn);
+      row.appendChild(left); row.appendChild(right);
+      dlgResults.appendChild(row);
+    }
+  }
+  dlgInput.addEventListener('input', refreshDialogResults);
+  dlgInput.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ if(lastResults[0] && currentPopupField){ currentPopupField.setValue(lastResults[0]); } closeBlockSearch(); }
+    else if(e.key==='Escape'){ closeBlockSearch(); }
+  });
+  dlgCloseBtn.addEventListener('click', closeBlockSearch);
+  dlgInsertFirstBtn.addEventListener('click', ()=>{ if(lastResults[0] && currentPopupField){ currentPopupField.setValue(lastResults[0]); } closeBlockSearch(); });
+  document.addEventListener('keydown',(e)=>{ const mod = navigator.platform.includes('Mac') ? e.metaKey : e.ctrlKey; if(mod && e.key.toLowerCase()==='k'){ if(currentPopupField){ e.preventDefault(); openBlockSearch(currentPopupField.getValue()); } }});
 
-
-  makeCommandBlock('forward',   'forward',  'forward');
-  makeCommandBlock('back',      'back',     'back');
-  makeCommandBlock('left',      'left',     'left');
-  makeCommandBlock('right',     'right',    'right');
-  makeCommandBlock('up',        'up',       'up');
-  makeCommandBlock('down',      'down',     'down');
-  makeCommandBlock('turnleft',  'turnleft', 'turnleft');
-  makeCommandBlock('turnright', 'turnright','turnright');
-
+  // --- Blocks that use the popup -------------------------------------------
   let lastFocusedPlaceField = null;
   Blockly.Blocks['setBlock'] = {
     init: function() {
+      // validator ensures alias exists (or we fall back to text)
+      const aliasField = new Blockly.FieldTextInput('DIRT', (v)=>{ if(!v||!v.trim()) return v; return BLOCK_ALIASES[v] ? v : null; });
+
+      // Replace default editor: clicking the alias opens popup instead of inline text editor
+      const origShowEditor = aliasField.showEditor_?.bind(aliasField);
+      aliasField.showEditor_ = function(e){
+        e && e.preventDefault();
+        currentPopupField = aliasField;
+        currentHighlightBlock = aliasField.getSourceBlock();
+        openBlockSearch(aliasField.getValue());
+        // If you want to allow normal typing as well, comment out the line above and call origShowEditor?.(e) instead.
+      };
+
+      // Magnifier button (robust click target)
+      const MAG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/></svg>');
+      const searchBtn = new Blockly.FieldImage(MAG, 18, 18, 'search', ()=>{
+        currentPopupField = aliasField; currentHighlightBlock = aliasField.getSourceBlock(); openBlockSearch(aliasField.getValue());
+      });
+
       this.appendDummyInput()
         .appendField('setBlock')
-        .appendField(new Blockly.FieldTextInput('DIRT', (v) => {
-          if (!v || v.trim() === '') return v;
-          return BLOCK_ALIASES[v] ? v : null;
-        }), 'BLOCK_ALIAS');
+        .appendField(aliasField, 'BLOCK_ALIAS')
+        .appendField(searchBtn, 'SEARCH_BTN');
+
       this.setPreviousStatement(true); this.setNextStatement(true);
       this.setColour(40);
-      this.setTooltip('Place a block by alias, e.g., DIRT');
+      this.setTooltip('Place a block by alias, e.g., DIRT. Click the alias (or 🔍) to search.');
     },
-    onchange: function(e) {
-      if (e.type === Blockly.Events.SELECTED && e.newElementId === this.id) {
+    onchange: function(e){
+      if(e.type === Blockly.Events.SELECTED && e.newElementId === this.id){
         lastFocusedPlaceField = this.getField('BLOCK_ALIAS');
+        currentPopupField = lastFocusedPlaceField; // improve ⌘K behavior
+        currentHighlightBlock = this;
       }
     }
   };
 
-  Blockly.Blocks['repeat'] = {
-    init: function() {
-      this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');
-      this.appendStatementInput('DO').appendField('do');
-      this.setPreviousStatement(true); this.setNextStatement(true);
-      this.setColour(210);
-      this.setTooltip('Repeat the enclosed actions N times (unrolled).');
-    }
-  };
+  Blockly.Blocks['repeat'] = { init: function(){
+    this.appendValueInput('COUNT').setCheck('Number').appendField('repeat');
+    this.appendStatementInput('DO').appendField('do');
+    this.setPreviousStatement(true); this.setNextStatement(true);
+    this.setColour(210); this.setTooltip('Repeat the enclosed actions N times (unrolled).');
+  }};
 
-  function cmd(name) { return { command: name }; }
-
-  function blockToJSONArray(block) {
-    switch (block.type) {
+  function cmd(name){ return { command: name }; }
+  function blockToJSONArray(block){
+    switch(block.type){
       case 'forward': return [cmd('forward')];
       case 'back':    return [cmd('back')];
       case 'left':    return [cmd('left')];
       case 'right':   return [cmd('right')];
       case 'up':      return [cmd('up')];
       case 'down':    return [cmd('down')];
-      case 'turnleft':    return [cmd('turnleft')];
-      case 'turnright':   return [cmd('turnright')];
+      case 'turnleft': return [cmd('turnleft')];
+      case 'turnright': return [cmd('turnright')];
       case 'setBlock': {
         const alias = block.getFieldValue('BLOCK_ALIAS') || 'DIRT';
-        const id = BLOCK_ALIASES[alias] || alias;
-        return [{ command: 'setBlock', blockType: id }];
+        const id = BLOCK_ALIASES[alias] || alias; return [{ command: 'setBlock', blockType: id }];
       }
       case 'repeat': {
         const countBlock = block.getInputTargetBlock('COUNT');
-        let count = 1;
-        if (countBlock) {
-          const code = Blockly.JavaScript.blockToCode(countBlock);
-          const parsed = Number(String(code).match(/-?\d+(?:\.\d+)?/)?.[0] ?? '1');
-          count = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
-        }
-        const bodyOnce = [];
-        for (let b = block.getInputTargetBlock('DO'); b; b = b.getNextBlock()) {
-          bodyOnce.push(...blockToJSONArray(b));
-        }
-        const out = [];
-        for (let i = 0; i < count; i++) {
-          out.push(...JSON.parse(JSON.stringify(bodyOnce)));
-        }
-        return out;
+        let count = 1; if(countBlock){ const code = Blockly.JavaScript.blockToCode(countBlock); const parsed = Number(String(code).match(/-?\d+(?:\.\d+)?/)?.[0] ?? '1'); count = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1; }
+        const bodyOnce = []; for(let b = block.getInputTargetBlock('DO'); b; b=b.getNextBlock()){ bodyOnce.push(...blockToJSONArray(b)); }
+        const out=[]; for(let i=0;i<count;i++){ out.push(...JSON.parse(JSON.stringify(bodyOnce))); } return out;
       }
-      default:
-        return [];
+      default: return [];
     }
   }
-
-  function linearizeStack(block) {
-    const out = [];
-    for (let b = block; b; b = b.getNextBlock()) {
-      out.push(...blockToJSONArray(b));
-    }
-    return out;
-  }
-
-  function collectFromStartBlocks() {
-    const topBlocks = workspace.getTopBlocks(true);
-    const instructions = [];
-    const startBlocks = topBlocks.filter(b => b.type === 'start');
-    if (startBlocks.length) {
-      for (const sb of startBlocks) {
-        for (let b = sb.getInputTargetBlock('DO'); b; b = b.getNextBlock()) {
-          instructions.push(...blockToJSONArray(b));
-        }
-      }
-    } else {
-      for (const tb of topBlocks) instructions.push(...linearizeStack(tb));
-    }
+  function linearizeStack(block){ const out=[]; for(let b=block; b; b=b.getNextBlock()){ out.push(...blockToJSONArray(b)); } return out; }
+  function collectFromStartBlocks(){
+    const top = workspace.getTopBlocks(true); const startBlocks = top.filter(b=>b.type==='start'); const instructions=[];
+    if(startBlocks.length){ for(const sb of startBlocks){ for(let b = sb.getInputTargetBlock('DO'); b; b=b.getNextBlock()){ instructions.push(...blockToJSONArray(b)); } } }
+    else { for(const tb of top){ instructions.push(...linearizeStack(tb)); } }
     return instructions;
   }
-
-  function countStartBlocks() {
-    return workspace.getTopBlocks(true).filter(b => b.type === 'start').length;
+  function countStartBlocks(){ return workspace.getTopBlocks(true).filter(b=>b.type==='start').length; }
+  function buildSerialPayload(meta){
+    const starts = getStartBlocks(); if(starts.length !== 1){ alert(`Serial mode requires exactly one start block (found ${starts.length}).`); return null; }
+    const instructions = collectInstructionsFromStart(starts[0]); return { ...meta, type:'serial', instructions };
   }
-
-  function buildSerialPayload(meta) {
-    const starts = getStartBlocks();
-    if (starts.length !== 1) {
-      alert(`Serial mode requires exactly one start block (found ${starts.length}).`);
-      return null; // signal failure to caller
-    }
-    const instructions = collectInstructionsFromStart(starts[0]);
-    return { ...meta, type: 'serial', instructions };
+  function buildParallelPayload(meta){
+    const starts = getStartBlocks(); if(!starts.length){ alert('Parallel mode requires at least one start block.'); return null; }
+    starts.sort((a,b)=>{ const pa=a.getRelativeToSurfaceXY(), pb=b.getRelativeToSurfaceXY(); return (pa.y-pb.y)||(pa.x-pb.x); });
+    const threads = starts.map(sb=>collectInstructionsFromStart(sb)); return { ...meta, type:'parallel', threads };
   }
-
-  function buildParallelPayload(meta) {
-    const starts = getStartBlocks();
-    if (starts.length === 0) {
-      alert('Parallel mode requires at least one start block.');
-      return null;
-    }
-    // optional: stable order by y,x so runs are deterministic
-    starts.sort((a,b) => {
-      const pa = a.getRelativeToSurfaceXY(), pb = b.getRelativeToSurfaceXY();
-      return (pa.y - pb.y) || (pa.x - pb.x);
-    });
-
-    const threads = starts.map(sb => collectInstructionsFromStart(sb));
-    return { ...meta, type: 'parallel', threads };
+  function generateProgramJSON(){
+    const meta = { programName: document.getElementById('programName').value || 'untitled', description: document.getElementById('description').value || '' };
+    const mode = getRunMode(); return mode==='parallel' ? buildParallelPayload(meta) : buildSerialPayload(meta);
   }
-
-  function generateProgramJSON() {
-    const meta = {
-      programName: document.getElementById('programName').value || 'untitled',
-      description: document.getElementById('description').value || ''
-    };
-    const mode = getRunMode();
-    return mode === 'parallel' ? buildParallelPayload(meta)
-                              : buildSerialPayload(meta);
+  function handleBlockCreateEnforceSingleStart(e){
+    if(getRunMode() !== 'serial') return; if(e.type !== Blockly.Events.BLOCK_CREATE) return; const ids = e.ids || [];
+    for(const id of ids){ const b = workspace.getBlockById(id); if(!b) continue; if(b.type==='start' && countStartBlocks()>1){ b.dispose(true); alert("Serial mode only allows one 'start' block. The extra one was removed."); console.warn('Serial mode allows only one start block.'); } }
   }
-
-  function handleBlockCreateEnforceSingleStart(e) {
-    if (getRunMode() !== 'serial') return;
-    if (e.type !== Blockly.Events.BLOCK_CREATE) return;
-
-    // e.ids can be multiple when pasting/importing
-    const ids = e.ids || [];
-    for (const id of ids) {
-      const b = workspace.getBlockById(id);
-      if (!b) continue;
-      if (b.type === 'start' && countStartBlocks() > 1) {
-        // Dispose the one just created
-        b.dispose(true);
-        alert("Serial mode only allows one 'start' block. The extra one was removed.");
-        // Optional: toast/alert once
-        console.warn('Serial mode allows only one start block.');
-        // alert('Serial mode allows only one start block.');
-      }
-    }
-  }
-
-  // Register once after you create the workspace
   workspace.addChangeListener(handleBlockCreateEnforceSingleStart);
 
-  const resultsBox = document.getElementById('blockResults');
-  function renderBlockResults(list) {
-    resultsBox.innerHTML = '';
-    if (!list.length) { resultsBox.textContent = 'No matches.'; return; }
-    const frag = document.createDocumentFragment();
-    list.forEach(alias => {
-      const div = document.createElement('div');
-      div.textContent = alias;
-      div.addEventListener('click', () => {
-        if (lastFocusedPlaceField) {
-          lastFocusedPlaceField.setValue(alias);
-        } else {
-          alert("Click a 'setBlock' block to focus it, then choose a block here.");
-        }
-      });
-      frag.appendChild(div);
-    });
-    resultsBox.appendChild(frag);
-  }
-
-  const searchEl = document.getElementById('blockSearch');
-  let searchTimer = null;
-  function runSearch() {
-    const q = searchEl.value.trim().toLowerCase();
-    if (!q) { renderBlockResults(ALL_ALIASES().slice(0, 300)); return; }
-    const starts = [], contains = [];
-    for (const alias of ALL_ALIASES()) {
-      const la = alias.toLowerCase();
-      if (la.startsWith(q)) starts.push(alias);
-      else if (la.includes(q)) contains.push(alias);
-      if (starts.length + contains.length >= 600) break;
-    }
-    renderBlockResults([...starts, ...contains]);
-  }
-  searchEl.addEventListener('input', () => {
-    if (searchTimer) cancelAnimationFrame(searchTimer);
-    searchTimer = requestAnimationFrame(runSearch);
-  });
-  renderBlockResults(ALL_ALIASES().slice(0, 300));
-
   const out = document.getElementById('jsonOut');
-
-  document.getElementById('btnExport').addEventListener('click', () => {
-    const data = generateProgramJSON();
-    out.value = JSON.stringify(data, null, 2);
+  document.getElementById('btnExport').addEventListener('click', ()=>{ const data = generateProgramJSON(); out.value = JSON.stringify(data, null, 2); });
+  document.getElementById('btnUpload').addEventListener('click', async ()=>{
+    const url = document.getElementById('serverUrl').value.trim(); const payload = generateProgramJSON(); out.value = JSON.stringify(payload, null, 2);
+    try{
+      const res = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json', 'X-Username': document.getElementById('username').value.trim(), 'X-Password': document.getElementById('password').value.trim(), 'X-MinecraftPlayername': document.getElementById('minecraftPlayername').value.trim(), 'X-Type': payload.type }, body: JSON.stringify(payload) });
+      if(!res.ok){ const text = await res.text().catch(()=> ''); alert(`Upload failed: ${res.status} ${res.statusText}\n${text}`); }
+      else { const text = await res.text().catch(()=> ''); alert(`Uploaded OK!\n${text || '(no response body)'}`); }
+    } catch(e){ alert(`Network error: ${e.message}`); }
   });
+  document.getElementById('btnClear').addEventListener('click', ()=>{ workspace.clear(); out.value=''; });
 
-  document.getElementById('btnUpload').addEventListener('click', async () => {
-    const url = document.getElementById('serverUrl').value.trim();
-    const payload = generateProgramJSON();
-    out.value = JSON.stringify(payload, null, 2);
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json',
-                  'X-Username': document.getElementById('username').value.trim(),
-                  'X-Password': document.getElementById('password').value.trim(),
-                  'X-MinecraftPlayername': document.getElementById('minecraftPlayername').value.trim(),
-                  'X-Type': payload.type
-        },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        alert(`Upload failed: ${res.status} ${res.statusText}\n${text}`);
-      } else {
-        const text = await res.text().catch(() => '');
-        alert(`Uploaded OK!\n${text || '(no response body)'}`);
-      }
-    } catch (e) {
-      alert(`Network error: ${e.message}`);
-    }
-  });
-
-  document.getElementById('btnClear').addEventListener('click', () => {
-    workspace.clear(); out.value = '';
-  });
-
-
-  //
   // helper functions for serial/parallel start block management
-  //
-  function getStartBlocks() {
-    return workspace.getTopBlocks(true).filter(b => b.type === 'start');
-  }
+  function getStartBlocks(){ return workspace.getTopBlocks(true).filter(b=>b.type==='start'); }
+  function collectInstructionsFromStart(startBlock){ const instr=[]; for(let b=startBlock.getInputTargetBlock('DO'); b; b=b.getNextBlock()){ instr.push(...blockToJSONArray(b)); } return instr; }
 
-  function collectInstructionsFromStart(startBlock) {
-    const instr = [];
-    for (let b = startBlock.getInputTargetBlock('DO'); b; b = b.getNextBlock()) {
-      instr.push(...blockToJSONArray(b)); // your existing unroller
-    }
-    return instr;
-  }
+  // --- persistence (unchanged) ---------------------------------------------
+  function debounce(func, wait){ let t; return function(...args){ clearTimeout(t); t=setTimeout(()=>func.apply(this,args), wait); } }
+  function saveWorkspace(){ const state = Blockly.serialization.workspaces.save(workspace); localStorage.setItem('knoxcraftBlocklyWorkspace', JSON.stringify(state)); console.log('Workspace saved'); }
+  const debouncedSave = debounce(saveWorkspace, 500); workspace.addChangeListener(debouncedSave);
+  window.addEventListener('load', ()=>{ const saved = localStorage.getItem('knoxcraftBlocklyWorkspace'); if(saved){ try{ const state = JSON.parse(saved); Blockly.serialization.workspaces.load(state, workspace); } catch(e){ console.error('Failed to restore workspace (JSON):', e); } } });
 
-  //
-  // saving and restoring workspace
-  //
-
-  // Simple debounce helper
-  function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
-
-  // Save workspace to localStorage
-  function saveWorkspace() {
-    const state = Blockly.serialization.workspaces.save(workspace);
-    localStorage.setItem('knoxcraftBlocklyWorkspace', JSON.stringify(state));
-    console.log("Workspace saved");
-  }
-
-
-  // Debounced version (wait 500ms after last change)
-  const debouncedSave = debounce(saveWorkspace, 500);
-
-  // Attach once
-  workspace.addChangeListener(debouncedSave);
-
-  window.addEventListener('load', () => {
-    const saved = localStorage.getItem('knoxcraftBlocklyWorkspace');
-    if (saved) {
-      try {
-        const state = JSON.parse(saved);
-        Blockly.serialization.workspaces.load(state, workspace);
-      } catch (e) {
-        console.error('Failed to restore workspace (JSON):', e);
-      }
-    }
-  });
-
+  // Initialize search once aliases are ready
+  function initAfterAliases(){ /* nothing extra needed; popup builds from ALL_ALIASES */ }
 </script>
 </body>
 </html>

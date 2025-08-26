@@ -1,38 +1,166 @@
-html, body { 
-    height: 100%; margin: 0;
+html, body {
+	height: 100% 
+}
+body {
+	margin:0;
+	font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial 
 }
 #app {
-    display: grid;
-    grid-template-columns: 1fr 360px; 
-    height: 100%; 
+	display:flex;
+	gap:12px;
+	padding:12px 
 }
-#blocklyDiv { 
-    height: 100%; 
-    width: 100%; 
+#blocklyDiv {
+	width: 70vw;
+	height: 80vh;
+	min-width: 640px;
+	border:1px solid #ddd;
+	border-radius: 8px 
 }
 #side {
-    padding: 12px; 
-    border-left: 1px solid #ddd; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px;
+	flex:1;
+	display:flex;
+	flex-direction: column;
+	gap:10px 
 }
-textarea { 
-    width: 100%; 
-    height: 240px; 
-    font-family: ui-monospace, 
-    SFMono-Regular, Menlo, Consolas, monospace; 
+#side label {
+	display:block;
+	font-weight:600;
+	margin-bottom:4px 
 }
-input[type="text"] { 
-    width: 100%; 
+#side input[type="text"] {
+	width:100%;
+	padding:6px 8px;
+	border:1px solid #ccc;
+	border-radius:6px 
 }
-button { 
-    padding: 8px 10px; 
+#side .row {
+	display:flex;
+	gap:8px;
+	flex-wrap:wrap 
 }
-.row { 
-    display:flex; 
-    gap:8px; align-items:center; 
+#jsonOut {
+	height: 260px;
+	width:100%;
+	resize:vertical;
+	padding:8px;
+	border:1px solid #ccc;
+	border-radius:8px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace 
 }
-label { 
-    font-weight: 600;
+/* Popup (native <dialog>) */
+:root {
+	--bg:#0b1220;
+	--panel:#121a2b;
+	--muted:#9aa2b1;
+	--text:#f2f5f9;
+	--ring:#8b5cf6;
+	--accent:#7c3aed 
+}
+dialog#blockSearchDialog {
+	border:none;
+	border-radius:14px;
+	padding:0;
+	width:min(720px, 92vw);
+	background:var(--panel);
+	color:var(--text);
+	overflow:hidden 
+}
+dialog#blockSearchDialog::backdrop {
+	background: rgba(0,0,0,.55) 
+}
+.modal-header {
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:.75rem;
+	padding:.9rem 1rem;
+	border-bottom:1px solid #1f283c 
+}
+.modal-title {
+	font-weight: 800;
+	letter-spacing:.2px 
+}
+.modal-body {
+	padding: .9rem 1rem 1rem 
+}
+.searchbar {
+	display:flex;
+	align-items:center;
+	gap:.6rem;
+	border:1px solid #1f283c;
+	border-radius:.7rem;
+	padding:.55rem .7rem;
+	background:#0b1220
+}
+.searchbar input {
+	flex:1;
+	background:transparent;
+	border:none;
+	outline:none;
+	color:var(--text);
+	font-size:1rem 
+}
+.kbd {
+	font:12px/1.8 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+	color:var(--muted);
+	border:1px solid #1f283c;
+	border-bottom-width:2px;
+	border-radius:.4rem;
+	padding:0 .35rem 
+}
+.results {
+	margin-top:.9rem;
+	max-height: 52vh;
+	overflow:auto;
+	border:1px solid #1f283c;
+	border-radius:.7rem 
+}
+.item {
+	display:flex;
+	align-items:center;
+	justify-content:space-between;
+	gap:1rem;
+	padding:.6rem .75rem;
+	border-bottom:1px solid #162036 
+}
+.item:last-child {
+	border-bottom:none 
+}
+.item strong {
+	font-weight:700 
+}
+.badge {
+	font-size:.8rem;
+	color:var(--muted) 
+}
+.btn {
+	appearance:none;
+	border:1px solid #1f283c;
+	background:#0b1220;
+	color:var(--text);
+	border-radius:.55rem;
+	padding:.4rem .65rem;
+	cursor:pointer;
+	font-weight:700 
+}
+.btn:hover {
+	background:#121a2b 
+}
+.modal-footer {
+	display:flex;
+	justify-content:space-between;
+	align-items:center;
+	gap:.75rem;
+	padding:.7rem 1rem;
+	border-top:1px solid #1f283c 
+}
+.empty {
+	color: var(--muted);
+	text-align:center;
+	padding: 1.1rem 0 
+}
+/* Visual cue on the block while popup is open */
+.blocklyHighlightedConnectionPath, .blocklySelected>.blocklyPath {
+    stroke: var(--accent) !important 
 }
