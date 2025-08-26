@@ -2,8 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Knoxcraft Blockly → JSON (Popup Block Search)</title>
+  <title>Knoxcraft Blockly -> JSON</title>
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="evaluator.js"></script>
   <link rel="stylesheet" href="blockly.css" />
 </head>
 <body>
@@ -343,20 +344,42 @@
     else { for(const tb of top){ instructions.push(...linearizeStack(tb)); } }
     return instructions;
   }
-  function countStartBlocks(){ return workspace.getTopBlocks(true).filter(b=>b.type==='start').length; }
-  function buildSerialPayload(meta){
-    const starts = getStartBlocks(); if(starts.length !== 1){ alert(`Serial mode requires exactly one start block (found ${starts.length}).`); return null; }
-    const instructions = collectInstructionsFromStart(starts[0]); return { ...meta, type:'serial', instructions };
+  function countStartBlocks(){ 
+    return workspace.getTopBlocks(true).filter(b=>b.type==='start').length; 
   }
-  function buildParallelPayload(meta){
-    const starts = getStartBlocks(); if(!starts.length){ alert('Parallel mode requires at least one start block.'); return null; }
-    starts.sort((a,b)=>{ const pa=a.getRelativeToSurfaceXY(), pb=b.getRelativeToSurfaceXY(); return (pa.y-pb.y)||(pa.x-pb.x); });
-    const threads = starts.map(sb=>collectInstructionsFromStart(sb)); return { ...meta, type:'parallel', threads };
+  function runSerial(meta) {
+    const starts = getStartBlocks();
+    if (starts.length !== 1) { alert(`Serial mode needs exactly 1 start (found ${starts.length}).`); return null; }
+    const env = {};
+    const instructions = compileChain(starts[0].getInputTargetBlock('DO'), env);
+    return { ...meta, type: 'serial', instructions };
   }
-  function generateProgramJSON(){
-    const meta = { programName: document.getElementById('programName').value || 'untitled', description: document.getElementById('description').value || '' };
-    const mode = getRunMode(); return mode==='parallel' ? buildParallelPayload(meta) : buildSerialPayload(meta);
+
+  function runParallel(meta) {
+    const starts = getStartBlocks();
+    if (starts.length === 0) { alert('Parallel mode needs at least 1 start.'); return null; }
+    // stable order (optional)
+    starts.sort((a,b) => {
+      const pa=a.getRelativeToSurfaceXY(), pb=b.getRelativeToSurfaceXY();
+      return (pa.y - pb.y) || (pa.x - pb.x);
+    });
+    const threads = starts.map(sb => {
+      const env = {};
+      const instructions = compileChain(sb.getInputTargetBlock('DO'), env);
+      return [ instructions ]; // unnamed
+    });
+    return { ...meta, type: 'parallel', threads };
   }
+
+  function generateProgramJSON() {
+    const meta = {
+      programName: document.getElementById('programName').value || 'untitled',
+      description: document.getElementById('description').value || ''
+    };
+    const mode = getRunMode(); // 'serial' | 'parallel'
+    return mode === 'parallel' ? runParallel(meta) : runSerial(meta);
+  }
+  
   function handleBlockCreateEnforceSingleStart(e){
     if(getRunMode() !== 'serial') return; if(e.type !== Blockly.Events.BLOCK_CREATE) return; const ids = e.ids || [];
     for(const id of ids){ const b = workspace.getBlockById(id); if(!b) continue; if(b.type==='start' && countStartBlocks()>1){ b.dispose(true); alert("Serial mode only allows one 'start' block. The extra one was removed."); console.warn('Serial mode allows only one start block.'); } }
@@ -376,8 +399,17 @@
   document.getElementById('btnClear').addEventListener('click', ()=>{ workspace.clear(); out.value=''; });
 
   // helper functions for serial/parallel start block management
-  function getStartBlocks(){ return workspace.getTopBlocks(true).filter(b=>b.type==='start'); }
-  function collectInstructionsFromStart(startBlock){ const instr=[]; for(let b=startBlock.getInputTargetBlock('DO'); b; b=b.getNextBlock()){ instr.push(...blockToJSONArray(b)); } return instr; }
+  function getStartBlocks(){ 
+    return workspace.getTopBlocks(true).filter(b=>b.type==='start'); 
+  }
+  function collectInstructionsFromStart(startBlock){ 
+    const instr=[]; 
+    for(let b=startBlock.getInputTargetBlock('DO'); b; b=b.getNextBlock())
+    { 
+      instr.push(...blockToJSONArray(b)); 
+    } 
+    return instr; 
+  }
 
   // --- persistence (unchanged) ---------------------------------------------
   function debounce(func, wait){ let t; return function(...args){ clearTimeout(t); t=setTimeout(()=>func.apply(this,args), wait); } }
