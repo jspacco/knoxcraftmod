@@ -3,9 +3,12 @@ package edu.knox.knoxcraftmod.http;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URLConnection;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
@@ -65,7 +68,14 @@ public class HttpServerManager {
             return;
         }
         httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
+        
+        // upload target 
         httpServer.createContext("/upload", exchange -> handleUpload(exchange, server));
+        
+        // serve static blockly content
+        httpServer.createContext("/blockly", exchange -> staticServe(exchange));
+
+        
         httpServer.setExecutor(Executors.newCachedThreadPool());
         httpServer.start();
         LOGGER.debug("HTTP server running on port {}}", PORT);
@@ -142,6 +152,65 @@ public class HttpServerManager {
             send(exchange, 500, "Server error");
         }
     }
+
+    private static void staticServe(HttpExchange exchange)
+    {
+        LOGGER.debug("Trying to static serve blockly");
+        try {
+            if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(405, -1); return;
+            }
+            String path = exchange.getRequestURI().getPath().replaceFirst("^/blockly/?", "");
+            if (path.isBlank()) path = "index.html";
+            String resourcePath = "web/blockly/" + path;
+
+            LOGGER.debug("resourcePath is {}", resourcePath);
+            try (InputStream in = HttpServerManager.class.getClassLoader()
+                                        .getResourceAsStream(resourcePath)) 
+            {
+                if (in == null) {
+                    // try directory index fallback
+                    try (InputStream in2 = Thread.currentThread().getContextClassLoader()
+                                                .getResourceAsStream(resourcePath + "/index.html")) {
+                        if (in2 == null) { 
+                            exchange.sendResponseHeaders(404, -1); 
+                            return;
+                        }
+                        byte[] bytes = in2.readAllBytes();
+                        exchange.getResponseHeaders().add("Content-Type", contentTypeFor("index.html"));
+                        exchange.sendResponseHeaders(200, bytes.length);
+                        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+                        return;
+                    }
+                }
+                byte[] bytes = in.readAllBytes();
+                exchange.getResponseHeaders().add("Content-Type", contentTypeFor(path));
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                exchange.sendResponseHeaders(500, -1);
+            } catch (IOException ex) { 
+                // ignore
+            }
+        }
+    }
+
+    private static String contentTypeFor(String filename) {
+      String guess = URLConnection.guessContentTypeFromName(filename);
+      if (guess != null) return guess;
+      // basic fallbacks
+      if (filename.endsWith(".js")) return "application/javascript; charset=utf-8";
+      if (filename.endsWith(".json")) return "application/json; charset=utf-8";
+      if (filename.endsWith(".css")) return "text/css; charset=utf-8";
+      if (filename.endsWith(".html")) return "text/html; charset=utf-8";
+      if (filename.endsWith(".png")) return "image/png";
+      if (filename.endsWith(".jpg") || filename.endsWith(".jpeg")) return "image/jpeg";
+      if (filename.endsWith(".svg")) return "image/svg+xml";
+      return "application/octet-stream";
+  }
 
     private static void send(HttpExchange exchange, int code, String message) {
         try {

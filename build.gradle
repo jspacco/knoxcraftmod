@@ -347,3 +347,11 @@ tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:none', '-quiet')
 }
 
+// Blockly
+// Copy docs/blockly into the resources output during build
+tasks.named('processResources') {
+    from("$rootDir/docs/blockly") {
+        into "web/blockly"
+    }
+}
+
