@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --no-daemon clean shadowJar clientJar -x test
+          ./gradlew --no-daemon clean shadowJar clientZip -x test
 
       - name: Collect artifacts
         shell: bash
@@ -45,9 +45,9 @@ jobs:
             -exec cp -v {} artifacts/ \;
 
           # Find the student client zip (adjust if your task outputs elsewhere)
-          CLIENT_ZIP="$(find build/knoxcraft/lib -maxdepth 1 -name 'knoxcraft-client*.zip' -print | head -n1 || true)"
+          CLIENT_ZIP="$(find build/ -maxdepth 1 -name 'knoxcraft-client*.zip' -print | head -n1 || true)"
           if [ -z "$CLIENT_ZIP" ]; then
-            echo "knoxcraft-client*.zip not found; check your clientJar output path" >&2
+            echo "knoxcraft-client*.zip not found; check your clientZip output path" >&2
             exit 1
           fi
           cp -v "$CLIENT_ZIP" artifacts/

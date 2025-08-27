@@ -260,88 +260,79 @@ jar {
 build.dependsOn shadowJar
 
 
-// Define a custom Jar task for the student lib jar
-task clientJar(type: Jar) {
-    group = 'build'
-    description = 'Builds a JAR with just the client code for students, excluding the example package'
-
-    archiveBaseName = 'knoxcraft-client'
-    destinationDirectory = file("$studentProjectDir/lib")
-
-    // Only include classes from the client package
-    from sourceSets.main.output
-
-    include 'edu/knox/knoxcraftmod/client/**'
-
-    // Exclude the example class
-    exclude 'edu/knox/knoxcraftmod/client/example/**'
-}
-
-
-task prepareStudentProject {
+// 1) Prepare the student folder (creates src/, lib/, workspace, copies gson, etc.)
+tasks.register('prepareStudentProject') {
     group = 'distribution'
     description = 'Creates a student project folder with src, lib, and workspace.'
-
-    def srcDir = new File(studentProjectDir, "src")
-    def libDir = new File(studentProjectDir, "lib")
+    outputs.dir studentProjectDir
 
     doLast {
         delete studentProjectDir
+        def srcDir = new File(studentProjectDir, "src")
+        def libDir = new File(studentProjectDir, "lib")
         srcDir.mkdirs()
         libDir.mkdirs()
 
-        def javaFiles = fileTree('src/main/java') {
-            include 'edu/knox/knoxcraftmod/client/example/*.java'
+        def javaFiles = fileTree('src/main/java') { include 'edu/knox/knoxcraftmod/client/example/*.java' }
+        javaFiles.each { f ->
+            def newContent = f.text.replaceAll('package edu\\.knox.*;', '')
+            new File(srcDir, f.name).text = newContent
         }
 
-        javaFiles.each { file ->
-            def newContent = file.text.replaceAll('package edu\\.knox.*;', '')
-            def targetFile = new File(srcDir, file.name)
-            targetFile.text = newContent
+        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { a ->
+            if (a.name == 'gson') copy { from a.file; into libDir }
         }
 
-        // Copy GSON JAR to lib
-        configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-            if (artifact.name == 'gson') {
-                copy {
-                    from artifact.file
-                    into libDir
-                }
-            }
-        }
-
-        // Create VS Code workspace file
-        def workspaceFile = new File(studentProjectDir, "StudentProject.code-workspace")
-        workspaceFile.text = """
+        new File(studentProjectDir, "DoubleClickToOpen.code-workspace").text = """
         {
-            "folders": [
-                {
-                    "path": "."
-                }
-            ],
-            "settings": {
-                "java.project.referencedLibraries": [
-                    "lib/**/*.jar"
-                ]
+          "folders": [
+            {
+              "path": "."
             }
+          ],
+          "settings":{
+            "java.project.referencedLibraries": [
+              "lib/**/*.jar"
+            ]
+          }
         }
         """.stripIndent().trim()
     }
 }
 
-prepareStudentProject.finalizedBy(clientJar)
+// 2) Build the student library JAR into build/knoxcraft/lib/
+tasks.register('studentLibJar', Jar) {
+    group = 'distribution'
+    description = 'JAR with just the client code for students (no example package).'
 
-tasks.named('javadoc') {
-    // change the output folder
-    destinationDir = file("$rootDir/docs/javadoc")
-    
-    doFirst {
-        source = source.filter { file ->
-            file.path.contains("edu/knox/knoxcraftmod/client") &&
-            !file.path.contains("edu/knox/knoxcraftmod/client/example")
-        }
-    }
+    archiveBaseName = 'knoxcraft-client'
+    destinationDirectory = file("$studentProjectDir/lib")
+
+    from sourceSets.main.output
+    include 'edu/knox/knoxcraftmod/client/**'
+    exclude 'edu/knox/knoxcraftmod/client/example/**'
+
+    // Make sure this runs AFTER prepare (so the delete doesn’t wipe the jar)
+    mustRunAfter tasks.named('prepareStudentProject')
 }
+
+// 3) Zip the prepared folder into build/knoxcraft-client.zip
+tasks.register('clientZip', Zip) {
+    group = 'distribution'
+    description = 'Zips the student project into knoxcraft-client.zip'
+
+    dependsOn tasks.named('prepareStudentProject'), tasks.named('studentLibJar')
+    destinationDirectory = layout.buildDirectory
+    archiveFileName = "knoxcraft-client.zip"
+
+    from(studentProjectDir)
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+// Optional: include in `build`
+tasks.named('build') { it.dependsOn 'clientZip' }
+
 
 tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:none', '-quiet')

@@ -6,7 +6,7 @@
 
 * Download the Java client code release TODO: create and link release
 * Unzip and open in VS Code
-    - double-click the `knoxcraft.code-workspace` file!
+    - double-click the `DoubleClickToOpen.code-workspace` file!
     - ❌ File => Open folder will NOT work correctly
 * Install vanilla Minecraft 1.21.8
 * Choose Multiplayer
