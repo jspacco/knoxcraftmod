@@ -45,7 +45,7 @@ jobs:
             -exec cp -v {} artifacts/ \;
 
           # Find the student client zip (adjust if your task outputs elsewhere)
-          CLIENT_ZIP="$(find build/knoxcraftmod -maxdepth 1 -name 'knoxcraft-client*.zip' -print | head -n1 || true)"
+          CLIENT_ZIP="$(find build/knoxcraft -maxdepth 1 -name 'knoxcraft-client*.zip' -print | head -n1 || true)"
           if [ -z "$CLIENT_ZIP" ]; then
             echo "knoxcraft-client*.zip not found; check your clientJar output path" >&2
             exit 1
