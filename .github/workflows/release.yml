@@ -52,15 +52,6 @@ jobs:
           fi
           cp -v "$CLIENT_ZIP" artifacts/
 
-          # Optional: rename with tag version
-          VERSION="${GITHUB_REF_NAME#v}"
-          for f in artifacts/*; do
-            base="$(basename "$f")"
-            if [[ "$base" != *"$VERSION"* ]]; then
-              mv -v "$f" "artifacts/${base%.*}-${VERSION}.${base##*.}"
-            fi
-          done
-
           # Optional: checksums
           (cd artifacts && sha256sum * > SHA256SUMS.txt)
 
