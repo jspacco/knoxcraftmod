@@ -1,0 +1,68 @@
+name: Release on tag
+
+on:
+  push:
+    tags:
+      - 'v*'   # v1.2.0, v1.3.0-rc1, etc
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build mod + client zip
+        run: |
+          ./gradlew --no-daemon clean shadowJar clientJar -x test
+
+      - name: Collect artifacts
+        run: |
+          set -euxo pipefail
+          mkdir -p artifacts
+
+          # Grab mod jar(s) but skip sources/javadoc jars
+          find build/libs -type f -name '*.jar' \
+            ! -name '*-sources.jar' ! -name '*-javadoc.jar' -print \
+            -exec cp -v {} artifacts/ \;
+
+          # Find the student client zip (adjust if your task outputs elsewhere)
+          CLIENT_ZIP=$(find build/knoxcraftmod -maxdepth 1 -name 'knoxcraft-client*.zip' -print || true) | head -n1 )
+          if [ -z "$CLIENT_ZIP" ]; then
+            echo "knoxcraft-client*.zip not found; check your clientJar output path" >&2
+            exit 1
+          fi
+          cp -v "$CLIENT_ZIP" artifacts/
+
+          # Optional: rename with tag version
+          VERSION="${GITHUB_REF_NAME#v}"
+          for f in artifacts/*; do
+            base=$(basename "$f")
+            if [[ "$base" != *"$VERSION"* ]]; then
+              cp -v "$f" "artifacts/${base%.*}-${VERSION}.${base##*.}"
+              rm -v "$f"
+            fi
+          done
+
+          # Optional: checksums
+          (cd artifacts && sha256sum * > SHA256SUMS.txt)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: ${{ contains(github.ref_name, '-test') }}
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          files: |
+            artifacts/**
