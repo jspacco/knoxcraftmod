@@ -12,6 +12,10 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      IS_TEST_TAG: ${{ contains(github.ref_name, '-test') }}
+      IS_PRERELEASE: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -19,17 +23,20 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '21'
-          cache: gradle
+          cache: 'gradle'
 
       - name: Build mod + client zip
+        shell: bash
         run: |
+          set -euo pipefail
           ./gradlew --no-daemon clean shadowJar clientJar -x test
 
       - name: Collect artifacts
+        shell: bash
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           mkdir -p artifacts
 
           # Grab mod jar(s) but skip sources/javadoc jars
@@ -38,7 +45,7 @@ jobs:
             -exec cp -v {} artifacts/ \;
 
           # Find the student client zip (adjust if your task outputs elsewhere)
-          CLIENT_ZIP=$(find build/knoxcraftmod -maxdepth 1 -name 'knoxcraft-client*.zip' -print || true) | head -n1 )
+          CLIENT_ZIP="$(find build/knoxcraftmod -maxdepth 1 -name 'knoxcraft-client*.zip' -print | head -n1 || true)"
           if [ -z "$CLIENT_ZIP" ]; then
             echo "knoxcraft-client*.zip not found; check your clientJar output path" >&2
             exit 1
@@ -48,10 +55,9 @@ jobs:
           # Optional: rename with tag version
           VERSION="${GITHUB_REF_NAME#v}"
           for f in artifacts/*; do
-            base=$(basename "$f")
+            base="$(basename "$f")"
             if [[ "$base" != *"$VERSION"* ]]; then
-              cp -v "$f" "artifacts/${base%.*}-${VERSION}.${base##*.}"
-              rm -v "$f"
+              mv -v "$f" "artifacts/${base%.*}-${VERSION}.${base##*.}"
             fi
           done
 
@@ -62,7 +68,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          draft: ${{ contains(github.ref_name, '-test') }}
-          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          draft: ${{ env.IS_TEST_TAG == 'true' }}
+          prerelease: ${{ env.IS_PRERELEASE == 'true' }}
           files: |
             artifacts/**
