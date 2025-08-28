@@ -2,6 +2,8 @@
 
 ![Terp image showing Java code and the pryamid structure it creates](docs/img/knoxcraft-img1.png)
 
+🛠️ This mod is built using [Minecraft Forge](http://minecraftforge.net/) 🛠️
+
 ## Students (Java)
 
 * Download the [latest Java knoxcraft-client.zip release](https://github.com/jspacco/knoxcraftmod/releases/latest/)
