@@ -4,7 +4,7 @@
 
 ## Students (Java)
 
-* Download the Java client code release TODO: create and link release
+* Download the [latest Java knoxcraft-client.zip release](https://github.com/jspacco/knoxcraftmod/releases/latest/)
 * Unzip and open in VS Code
     - double-click the `DoubleClickToOpen.code-workspace` file!
     - ❌ File => Open folder will NOT work correctly
@@ -66,7 +66,7 @@ You will need to run a Minecraft server for your students. This is **not** as di
 * Java 21 
     — ❌ other Java versions will **NOT** work!
 * Download Forge [1.21.8-58.0.6](https://maven.minecraftforge.net/net/minecraftforge/forge/1.21.8-58.0.10/forge-1.21.8-58.0.10-installer.jar)
-* Download the latest release of knoxcraftmod TODO: link
+* Download the [latest release of knoxcraftmod-vX.Y.Z.jar](https://github.com/jspacco/knoxcraftmod/releases)
 * Download the [install-server.sh](https://raw.githubusercontent.com/jspacco/knoxcraftmod/refs/heads/mc/1.21.8-vanilla/tools/install-server.sh) script
 
 ### How to install
