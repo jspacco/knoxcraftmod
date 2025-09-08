@@ -339,6 +339,55 @@ tasks.register('clientZip', Zip) {
     reproducibleFileOrder = true
 }
 
+def bucket      = 'knoxcraft-artifacts-8675309'
+def key         = 'knoxcraft/manifest.json'
+def modVersion  = project.findProperty('mod_version').toString()
+
+def readRemoteVersion = {
+    def out = new ByteArrayOutputStream()
+    exec {
+        commandLine 'bash','-lc', """
+          aws s3api head-object --bucket ${bucket} --key ${key} \
+            --query 'Metadata.mod-version' --output text 2>/dev/null || echo NONE
+        """
+        standardOutput = out
+        ignoreExitValue = true
+    }
+    out.toString('UTF-8').trim()
+}
+
+// upload knoxcraft-manifest.json to S3
+// used by knoxcraft-infra for AWS
+tasks.register('publishManifestIfChanged') {
+    // Mark inputs so Gradle knows when the task is “dirty”
+    inputs.property('mod_version', modVersion)
+    outputs.upToDateWhen {
+        // Skip if S3 already has this exact version
+        readRemoteVersion() == modVersion
+    }
+    doLast {
+        // write manifest
+        def manifest = [
+            mod_tag        : modVersion,
+            mod_asset_regex: '^knoxcraftmod-(?:[0-9.]+-)?v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-rc[0-9]+)?(?:-[A-Za-z0-9._+-]+)?\\.jar$',
+            mc_version     : project.findProperty('minecraft_version'),
+            forge_version  : project.findProperty('forge_version')
+        ]
+        def outFile = file("$buildDir/knoxcraft-manifest.json")
+        outFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(manifest))
+
+        // upload + stamp metadata so future runs can compare quickly
+        exec {
+            commandLine 'bash','-lc', """
+              aws s3 cp "$outFile" "s3://${bucket}/${key}" \
+                --metadata mod-version=${modVersion}
+            """
+        }
+        println "Uploaded manifest for ${modVersion}"
+    }
+}
+
+
 // Optional: include in `build`
 tasks.named('build') { it.dependsOn 'clientZip' }
 
