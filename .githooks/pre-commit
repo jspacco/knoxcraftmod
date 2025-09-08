@@ -9,7 +9,6 @@ command -v ./gradlew >/dev/null || { echo "[pre-commit] Gradle wrapper missing";
 
 # Require creds (SSO or otherwise)
 aws sts get-caller-identity >/dev/null 2>&1 || {
-    touch /tmp/need-aws-sso-login;
     echo "[pre-commit] No AWS creds. Run: aws sso login"; 
     exit 1; 
 }
