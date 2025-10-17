@@ -51,6 +51,11 @@ public class TerpCommand
                     .executes(ctx -> listPrograms(ctx.getSource())))
                 .then(Commands.literal("stop")
                     .executes(ctx -> stopTerp(ctx.getSource())))
+                .then(Commands.literal("delete").
+                    then(Commands.argument("program", StringArgumentType.string())
+                        .executes(ctx -> deleteProgram(
+                            ctx.getSource(),
+                            StringArgumentType.getString(ctx, "program")))))
                 .then(Commands.literal("help").executes(ctx -> {
                     Msg.reply(ctx.getSource(), 
                         "Terp Commands:\n/terp summon\n/terp list\n/terp stop\n/terp help\n/terp forward|back|up|down|left|right\n/terp run <program>", 
@@ -213,6 +218,15 @@ public class TerpCommand
 
     private static boolean hasMainTerp(UUID uuid) {
         return terpMap.containsKey(uuid);
+    }
+
+    private static int deleteProgram(CommandSourceStack source, String programName) {
+        ServerPlayer player = source.getPlayer();
+        ServerLevel level = source.getLevel();
+
+        TerpProgramData data = TerpProgramData.get(level);
+        String playerName = player.getGameProfile().getName();
+        return data.deleteProgram(playerName, programName);
     }
 
     private static int runProgram(CommandSourceStack source, String programName) {

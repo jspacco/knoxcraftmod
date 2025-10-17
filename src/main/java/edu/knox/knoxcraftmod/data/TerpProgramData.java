@@ -92,6 +92,17 @@ public class TerpProgramData extends SavedData {
     
     private final Map<String, Map<String, TerpProgram>> programs = new HashMap<>();
 
+    public int deleteProgram(String username, String programName) {
+        LOGGER.debug("removing program {} for user {}", programName, username);
+        Map<String, TerpProgram> programsForUser = programs.get(username.toLowerCase());
+        if (programsForUser != null) {
+            programsForUser.remove(programName);
+            setDirty();
+            return 0;
+        }
+        return 1;
+    }
+
     public void addProgram(String username, TerpProgram program) {
         programs.computeIfAbsent(username.toLowerCase(), k -> new HashMap<>()).put(program.getProgramName(), program);
         LOGGER.debug("Program {} uploaded, map is now {}", program.getProgramName(), programs);
