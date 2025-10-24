@@ -7,12 +7,24 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-version = mod_version
+// Single source of truth: gradle.properties -> mod_version=v0.0.1-rc5
+def rawModVersionP = providers.gradleProperty('mod_version').orElse('0.0.1')
+def modVersionForLoaderP = rawModVersionP.map { v ->
+    // strip leading 'v' and any -rc/+build
+    def m = (v =~ /(?:^v)?(\d+\.\d+\.\d+)(?:[-+].*)?$/) 
+    m.matches() ? m.group(1) : v
+}
+
+// Use full tag for artifact filenames/JARs/releases (e.g., v0.0.1-rc5)
+version = rawModVersionP.get()
+
+
 group = mod_group_id
 
 base {
     archivesName = mod_id
 }
+
 
 // Mojang ships Java 21 to end users in 1.20.5+, so your mod should target Java 21.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -153,10 +165,12 @@ tasks.named('processResources', ProcessResources).configure {
             minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
             forge_version: forge_version, forge_version_range: forge_version_range,
             loader_version_range: loader_version_range,
-            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, 
+            mod_version: modVersionForLoaderP.get(),
             mod_authors: mod_authors, mod_description: mod_description,
     ]
     inputs.properties replaceProperties
+    
 
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]

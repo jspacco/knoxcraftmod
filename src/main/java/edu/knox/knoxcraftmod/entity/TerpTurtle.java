@@ -155,7 +155,7 @@ public class TerpTurtle extends Turtle {
         }
 
         if (!List.of("forward", "back", "left", "right", 
-            "up", "down", "turnleft", "turnright", 
+            "up", "down", "turnLeft", "turnRight", "turnleft", "turnright",
             "tl", "tr", "nop").contains(instr.command))
         {
             LOGGER.warn("unknown command: "+instr.command);
@@ -199,10 +199,10 @@ public class TerpTurtle extends Turtle {
                 setPos(Vec3.atBottomCenterOf(target));
             }
             
-            case "turnleft", "tl" -> {
+            case "turnleft", "tl", "turnLeft" -> {
                 setTerpDirection(getTerpDirection().turnLeft());
             }
-            case "turnright", "tr" -> {
+            case "turnright", "tr", "turnRight" -> {
                 setTerpDirection(getTerpDirection().turnRight());
             }
         }

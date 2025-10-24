@@ -43,10 +43,20 @@ public class TerpCommand
                 .then(Commands.literal("summon")
                     .executes(ctx -> summonTerp(ctx.getSource())))
                 .then(Commands.literal("run")
-                    .then(Commands.argument("program", StringArgumentType.string())
-                        .executes(ctx -> runProgram(
-                            ctx.getSource(),
-                            StringArgumentType.getString(ctx, "program")))))
+                    .then(Commands.argument("programName", StringArgumentType.word())
+                    // if only <programName> provided
+                    .executes(ctx -> {
+                        ServerPlayer executor = ctx.getSource().getPlayerOrException();
+                        String programName = StringArgumentType.getString(ctx, "programName");
+                        return runProgram(ctx.getSource(), programName, executor.getGameProfile().getName());
+                    })
+                    // if <programName> and <ownerName> provided
+                    .then(Commands.argument("ownerName", StringArgumentType.word())
+                        .executes(ctx -> {
+                            String programName = StringArgumentType.getString(ctx, "programName");
+                            String ownerName = StringArgumentType.getString(ctx, "ownerName");
+                            return runProgram(ctx.getSource(), programName, ownerName);
+                        }))))
                 .then(Commands.literal("list")
                     .executes(ctx -> listPrograms(ctx.getSource())))
                 .then(Commands.literal("stop")
@@ -215,19 +225,22 @@ public class TerpCommand
         return terpMap.containsKey(uuid);
     }
 
-    private static int runProgram(CommandSourceStack source, String programName) {
-        ServerPlayer player = source.getPlayer();
+    private static int runProgram(CommandSourceStack source, String programName, String playerName) {
+        // executor is the player running the terp command
+        // may not be the person owning the program to be run
+        // students may not own minecraft and may borrow their friend's accounts
+        ServerPlayer executor = source.getPlayer();
         ServerLevel level = source.getLevel();
 
-        TerpTurtle terp = getMainTerp(player.getUUID());
+        TerpTurtle terp = getMainTerp(executor.getUUID());
         
         if (terp == null) {
             Msg.fail(source, "First summon your Terp with '/terp summon'");
             return 0;
         }
 
-        if (isRunning(player.getUUID())) {
-            Msg.fail(source, "Terp is busy! Wait or stop '/terp stop' ");
+        if (isRunning(executor.getUUID())) {
+            Msg.fail(source, "Terp is busy! Wait or stop with '/terp stop' ");
             return 0;
         }
 
@@ -235,9 +248,14 @@ public class TerpCommand
         // becuase if it's not there it makes a new one
         TerpProgramData data = TerpProgramData.get(level);
 
-        String playerName = player.getGameProfile().getName();
-        LOGGER.debug("Game Profile name is "+playerName);
-        TerpProgram program = data.getProgramsFor(player.getGameProfile().getName()).get(programName);
+        //String playerName = executor.getGameProfile().getName();
+        LOGGER.debug("Looking for {} for player {} ", programName, playerName);
+        Map<String, TerpProgram> programs = data.getProgramsFor(playerName);
+        if (programs.isEmpty()) {
+            Msg.fail(source, format("No programs found for user '%s'", playerName));
+            return 0;
+        }
+        TerpProgram program = programs.get(programName);
         if (program == null) {
             Msg.fail(source, format("Program '%s' not found", programName));
             return 0;
@@ -250,9 +268,9 @@ public class TerpCommand
             // Parallel
             // create and run terp thread for each set of instructions
             for (List<Instruction> instructions : parallel.getThreads()) {
-                TerpTurtle thread = spawnTerpThread(player, level, terp);
+                TerpTurtle thread = spawnTerpThread(executor, level, terp);
                 thread.setIsThread(true);
-                addTerpThread(player.getUUID(), thread);
+                addTerpThread(executor.getUUID(), thread);
                 // start running the list of instructions
                 thread.runProgram(instructions);
             }
@@ -262,7 +280,7 @@ public class TerpCommand
             return 0;
         }
 
-        Msg.send(player, format("Program %s loaded.", programName), false);
+        Msg.send(executor, format("Program %s loaded.", programName), false);
         return Command.SINGLE_SUCCESS;
     }
 
