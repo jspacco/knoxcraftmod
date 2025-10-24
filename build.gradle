@@ -7,12 +7,24 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-version = mod_version
+// Single source of truth: gradle.properties -> mod_version=v0.0.1-rc5
+def rawModVersionP = providers.gradleProperty('mod_version').orElse('0.0.1')
+def modVersionForLoaderP = rawModVersionP.map { v ->
+    // strip leading 'v' and any -rc/+build
+    def m = (v =~ /(?:^v)?(\d+\.\d+\.\d+)(?:[-+].*)?$/) 
+    m.matches() ? m.group(1) : v
+}
+
+// Use full tag for artifact filenames/JARs/releases (e.g., v0.0.1-rc5)
+version = rawModVersionP.get()
+
+
 group = mod_group_id
 
 base {
     archivesName = mod_id
 }
+
 
 // Mojang ships Java 21 to end users in 1.20.5+, so your mod should target Java 21.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -149,25 +161,18 @@ dependencies {
 // When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.
 // See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
 tasks.named('processResources', ProcessResources).configure {
-    def replaceProperties = [
-        minecraft_version: minecraft_version, 
-        minecraft_version_range: minecraft_version_range,
-        forge_version: forge_version, 
-        forge_version_range: forge_version_range,
-        loader_version_range: loader_version_range,
-        mod_id: mod_id, 
-        mod_name: mod_name, mod_license: mod_license, 
-        mod_version: mod_version,
-        mod_authors: mod_authors, 
-        mod_description: mod_description,
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, 
+            mod_version: modVersionForLoaderP.get(),
+            mod_authors: mod_authors, mod_description: mod_description,
     ]
     inputs.properties replaceProperties
+    
 
-    filesMatching('META-INF/mods.toml') {
-        expand(replaceProperties + [project: project, mod_version: mod_version.replaceFirst(/^v/, '')])
-    }
-
-    filesMatching(['pack.mcmeta']) {
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
 }
