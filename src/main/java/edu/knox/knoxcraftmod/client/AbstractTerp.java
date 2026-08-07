@@ -1,6 +1,7 @@
 package edu.knox.knoxcraftmod.client;
 
 import java.util.List;
+import java.awt.Color;
 
 public abstract class AbstractTerp {
 
@@ -24,10 +25,84 @@ public abstract class AbstractTerp {
     }
 
     /**
+     * Set the given block type at the Terp's current location.
+     * 
+     * @param color
+     */
+    public void setBlock(Color color) {
+        instructions.add(new TerpInstruction(TerpCommand.SET_BLOCK, color));
+    }
+
+    private void setBlockDirection(Color color, int num, TerpCommand direction) {
+        instructions.add(new TerpInstruction(direction, num, color));
+    }
+
+    private void setBlockDirection(TerpBlockType terpBlockType, int num, TerpCommand direction) {
+        instructions.add(new TerpInstruction(direction, num, terpBlockType));
+    }
+
+    public void setBlockForward(TerpBlockType terpBlockType, int num) {
+        setBlockDirection(terpBlockType, num, TerpCommand.SET_BLOCK_FORWARD);
+    }
+
+    public void setBlockForward(Color color, int num) {
+        setBlockDirection(color, num, TerpCommand.SET_BLOCK_FORWARD);
+    }
+
+    public void setBlockBack(TerpBlockType terpBlockType, int num) {
+        setBlockDirection(terpBlockType, num, TerpCommand.SET_BLOCK_BACK);
+    }
+
+    public void setBlockBack(Color color, int num) {
+        setBlockDirection(color, num, TerpCommand.SET_BLOCK_BACK);
+    }
+
+    public void setBlockLeft(TerpBlockType terpBlockType, int num) {
+        setBlockDirection(terpBlockType, num, TerpCommand.SET_BLOCK_LEFT);
+    }
+
+    public void setBlockLeft(Color color, int num) {
+        setBlockDirection(color, num, TerpCommand.SET_BLOCK_LEFT);
+    }
+
+    public void setBlockRight(TerpBlockType terpBlockType, int num) {
+        setBlockDirection(terpBlockType, num, TerpCommand.SET_BLOCK_RIGHT);
+    }
+
+    public void setBlockRight(Color color, int num) {
+        setBlockDirection(color, num, TerpCommand.SET_BLOCK_RIGHT);
+    }
+
+    public void setBlockUp(TerpBlockType terpBlockType, int num) {
+        setBlockDirection(terpBlockType, num, TerpCommand.SET_BLOCK_UP);
+    }
+
+    public void setBlockUp(Color color, int num) {
+        setBlockDirection(color, num, TerpCommand.SET_BLOCK_UP);
+    }
+
+    public void setBlockDown(TerpBlockType terpBlockType, int num) {
+        setBlockDirection(terpBlockType, num, TerpCommand.SET_BLOCK_DOWN);
+    }
+
+    public void setBlockDown(Color color, int num) {
+        setBlockDirection(color, num, TerpCommand.SET_BLOCK_DOWN);
+    }
+
+    private void move(TerpCommand direction, int num) {
+        instructions.add(new TerpInstruction(direction, num));
+    }
+
+    /**
      * Move the Terp forward one block.
      */
     public void forward() {
         add(TerpCommand.FORWARD);
+    }
+
+   
+    public void forward(int num) {
+        move(TerpCommand.FORWARD, num);
     }
 
     /**
@@ -35,6 +110,10 @@ public abstract class AbstractTerp {
      */
     public void back() {
         add(TerpCommand.BACK);
+    }
+
+    public void back(int num) {
+        move(TerpCommand.BACK, num);
     }
 
     /**
@@ -58,11 +137,19 @@ public abstract class AbstractTerp {
         add(TerpCommand.LEFT);
     }
 
+    public void left(int num) {
+        move(TerpCommand.LEFT, num);
+    }
+
     /**
      * Move the Terp one block to the right.
      */
     public void right() {
         add(TerpCommand.RIGHT);
+    }
+
+    public void right(int num) {
+        move(TerpCommand.RIGHT, num);
     }
 
     /**
@@ -72,6 +159,10 @@ public abstract class AbstractTerp {
      */
     public void up() {
         add(TerpCommand.UP);
+    }
+
+    public void up(int num) {
+        move(TerpCommand.UP, num);
     }
 
     /**
@@ -85,6 +176,10 @@ public abstract class AbstractTerp {
         add(TerpCommand.DOWN);
     }
 
+    public void down(int num) {
+        move(TerpCommand.UP, num);
+    }
+
     /**
      * No operation. The Terp sits there for 1 tick and does nothing.
      * 
@@ -93,6 +188,10 @@ public abstract class AbstractTerp {
      */
     public void nop() {
         add(TerpCommand.NOP);
+    }
+
+    public void nop(int num) {
+        move(TerpCommand.NOP, num);
     }
 
     protected void add(TerpCommand cmd) {

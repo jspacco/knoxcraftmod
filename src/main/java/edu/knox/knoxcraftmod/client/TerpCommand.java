@@ -12,6 +12,13 @@ enum TerpCommand
     DOWN("down"),
     NOP("nop"),
     SET_BLOCK("setBlock"),
+
+    SET_BLOCK_FORWARD("setBlockForward"),
+    SET_BLOCK_BACK("setBlockBack"),
+    SET_BLOCK_LEFT("setBlockLeft"),
+    SET_BLOCK_RIGHT("setBlockRight"),
+    SET_BLOCK_UP("setBlockUp"),
+    SET_BLOCK_DOWN("setBlockDown"),
     ;
 
     private final String id;

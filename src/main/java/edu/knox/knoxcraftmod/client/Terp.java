@@ -31,4 +31,8 @@ public class Terp extends AbstractTerp
         return description;
     }
 
+    public String toJson() {
+        return KnoxelUploader.toJson(this, "fakeuser@domain.com");
+    }
+
 }
